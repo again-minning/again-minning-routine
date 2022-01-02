@@ -1,12 +1,12 @@
-from enum import IntEnum, unique
+from enum import Enum, unique
 
 
 @unique
-class Week(IntEnum):
-    MON = 0
-    TUE = 1
-    WED = 2
-    THU = 3
-    FRI = 4
-    SAT = 5
-    SUN = 6
+class Week(str, Enum):
+    MON = 'MON'
+    TUE = 'TUE'
+    WED = 'WED'
+    THU = 'THU'
+    FRI = 'FRI'
+    SAT = 'SAT'
+    SUN = 'SUN'
