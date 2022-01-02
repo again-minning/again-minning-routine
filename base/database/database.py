@@ -6,7 +6,8 @@ from config.settings import settings
 
 SQLALCHEMY_DATABASE_URL = settings.POSTGRES_URL
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+# echo = show_sql
+engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=True)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

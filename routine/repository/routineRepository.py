@@ -1,5 +1,6 @@
-from sqlalchemy.orm import Session
 from sqlalchemy import and_
+from sqlalchemy.orm import Session
+from sqlalchemy.orm import joinedload
 
 from base.utils.time import convert_str2time
 from routine.models.routine import Routine
@@ -7,7 +8,13 @@ from routine.schemas import RoutineCreateRequest
 
 
 def get_routine(db: Session, routine_id: int):
-    return db.query(Routine).filter(and_(Routine.routine_id == routine_id, Routine.is_delete == False)).first()
+    return db.query(Routine).options(
+        joinedload(Routine.days)).filter(
+        and_(
+            Routine.routine_id == routine_id,
+            Routine.is_delete == False
+        )
+    ).all()
 
 
 def create_routine(db: Session, routine: RoutineCreateRequest):

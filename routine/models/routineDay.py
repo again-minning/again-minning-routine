@@ -8,14 +8,12 @@ from routine.constants.week import Week
 class RoutineDay(Base):
     __tablename__ = 'routine_days'
 
-    routine_day_id = Column(Integer, primary_key=True, index=True)
-
-    day = Column(Enum(Week))
+    day = Column(Enum(Week), primary_key=True)
 
     sequence = Column(Integer)
 
     routine = relationship('Routine', back_populates='days')
 
-    routine_id = Column(Integer, ForeignKey('routines.routine_id'))
+    routine_id = Column(Integer, ForeignKey('routines.routine_id'), primary_key=True)
 
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
