@@ -36,19 +36,17 @@ class RoutineCreateRequest(RoutineBase):
 
 
 class RoutineCommonResponse(RoutineBase):
-    routine_id: int
-    # result: Result
-
-
-class RoutineCreateResponse(RoutineCommonResponse):
     pass
 
 
+class RoutineCreateResponse(BaseModel):
+    routine_id: int
+    success: bool
+
+
 class Routine(RoutineBase):
-    from retrospect.schemas import Retrospect
     routine_id: int
     account_id: int
-    retrospects: List[Retrospect] = []
     is_delete: bool
     created_at: datetime
 

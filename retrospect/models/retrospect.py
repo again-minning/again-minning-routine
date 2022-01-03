@@ -15,19 +15,6 @@ class Retrospect(Base):
     # OneToOne
     image = relationship('Snapshot', back_populates='retrospect', uselist=False)
 
-    # ManyToOne
-    routine = relationship('Routine', back_populates='retrospects')
-
-    routine_id = Column(Integer, ForeignKey('routines.routine_id'))
-
-    content = Column(String)
-
-    result = Column(Enum(Result))
-
-    is_report = Column(Boolean, default=False)
-
-    date = Column(DateTime(timezone=True))
-
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     def add_image(self, url):
