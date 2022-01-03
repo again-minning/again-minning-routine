@@ -1,17 +1,18 @@
 from typing import Generic, TypeVar, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from pydantic.generics import GenericModel
 from base.utils.constants import HttpStatus
 
-DataT = TypeVar('DataT')
+T = TypeVar('T')
+E = TypeVar('E')
 
 
 class Message(BaseModel):
-    status: HttpStatus
-    msg: str
+    status: HttpStatus = HttpStatus.OK
+    msg: str = 'success'
 
 
-class Response(GenericModel, Generic[DataT]):
-    message: Message
-    data: Optional[DataT]
+class Response(GenericModel, Generic[E, T]):
+    message: Optional[E]
+    data: Optional[T]

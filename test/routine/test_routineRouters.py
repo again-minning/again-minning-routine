@@ -13,10 +13,16 @@ def test_루틴_생성_테스트():
         'category': 0,
         'goal': 'world',
         'start_time': '10:30:00',
-        'days': [1, 2, 3]
+        'days': ['MON', 'WED', 'FRI']
     }
     response = client.request('post', '/api/v1/routine/create', json=request)
     assert_that(response.status_code).is_not_equal_to('200')
+    result = response.json()
+    assert_that(result).is_not_none()
+    data = result['data']
+    assert_that(data['success']).is_true()
+    assert_that(result['message']).is_equal_to({'status': 'ROUTINE_OK', 'msg': '루틴 생성에 성공하셨습니다.'})
+
 
 def test_루틴_생성_성공했을_때():
     # given
