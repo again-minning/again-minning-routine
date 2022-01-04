@@ -20,6 +20,15 @@ def test_회고_정상적으로_생성():
     # then
     """
     조회를 통해 해당 값이 잘 들어가 있는 지 확인
+    {
+        'message' : {
+            'status' : 'RETROSPECT_CREATE_OK',
+            'msg': '회고 생성에 성공하셨습니다.'
+        },
+        'data': {
+            'success': true
+        }
+    }
     """
 
 
@@ -37,6 +46,15 @@ def test_회고_생성_성공_이미지_파라미터가_없을_때():
     # then
     """
     이미지 없어도 생성 완료
+        {
+        'message' : {
+            'status' : 'RETROSPECT_CREATE_OK',
+            'msg': '회고 생성에 성공하셨습니다.'
+        },
+        'data': {
+            'success': true
+        }
+    }
     """
 
 def test_회고_생성_실패_루틴_정보가_없을_때():
@@ -52,6 +70,15 @@ def test_회고_생성_실패_루틴_정보가_없을_때():
     # then
     """
     에러 확인
+        {
+        'message' : {
+            'status' : 'RETROSPECT_BAD_REQUEST',
+            'msg': '회고 생성에 실패하셨습니다..'
+        },
+        'data': {
+            'detail': JSON
+        }
+    }
     """
 
 def test_회고_수정할_때_이미지에_대해서():
@@ -70,6 +97,15 @@ def test_회고_수정할_때_이미지에_대해서():
     # then
     """
     성공 여부 전달
+        {
+        'message' : {
+            'status' : 'RETROSPECT_UPDATE_OK',
+            'msg': '회고 수정에 성공하셨습니다.'
+        },
+        'data': {
+            'success': true
+        }
+    }
     """
 
 def test_회고_수정할_때_글_내용_수정할_때():
@@ -87,6 +123,15 @@ def test_회고_수정할_때_글_내용_수정할_때():
     # then
     """
     성공 여부 전달
+            {
+        'message' : {
+            'status' : 'RETROSPECT_UPDATE_OK',
+            'msg': '회고 수정에 성공하셨습니다.'
+        },
+        'data': {
+            'success': true
+        }
+    }
     """
 
 def test_회고_삭제할_때():
@@ -103,4 +148,53 @@ def test_회고_삭제할_때():
     # then
     """
     성공 여부 전달
+            {
+        'message' : {
+            'status' : 'RETROSPECT_DELETE_OK',
+            'msg': '회고 삭제에 성공하셨습니다.'
+        },
+        'data': {
+            'success': true
+        }
+    }
+    """
+    
+def test_당일_해야하는_회고_리스트_조회():
+    # given
+    """
+    @:param: account_id, 요일
+    :return:
+    """
+    # when
+    """
+    당일 요일에 해당하는 루틴 목록 조회 where 오늘 회고 했는 지 안했는 지 조회
+    조회 로직은 회고와 left outer join을 해서 retrospect이 null인 것을 허용하면서 조회를 한다.
+    처음 조회를 할 때 쌩으로 다 조회하지 말고 조회 할 때 필요한 값만 조회를 한다. 
+    """
+    # then
+    """
+    {
+        'message' : {
+            'status' : 'RETROSPECT_SELECT_OK',
+            'msg': '회고 조회에 성공하셨습니다.'
+        },
+        'data': {
+            [
+                {
+                    'retrospect_id' : int or null,
+                    'routine_id': int
+                    'title' : str,
+                    'content': str,
+                    'sequence': int
+                },
+                {
+                    'retrospect_id' : int or null,
+                    'routine_id': int
+                    'title' : str,
+                    'content': str,
+                    'sequence': int
+                },
+            ]
+        }
+    }
     """

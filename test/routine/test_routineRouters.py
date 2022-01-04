@@ -37,6 +37,15 @@ def test_루틴_생성_성공했을_때():
     # then
     """
     단순히 성공 여부만 전달
+    {
+        'message' : {
+            'status' : 'ROUTINE_CREATE_OK',
+            'msg': '루틴 생성에 성공하셨습니다.'
+        },
+        'data': {
+            'success': true
+        }
+    }
     """
 
 def test_루틴_생성_루틴_이름_공백일_때():
@@ -52,6 +61,15 @@ def test_루틴_생성_루틴_이름_공백일_때():
     # then
     """
     실패 값 전달
+     {
+        'message' : {
+            'status' : 'ROUTINE_CREATE_BAD_REQUEST',
+            'msg': '루틴 생성에 실패하셨습니다.'
+        },
+        'data': {
+            'detail': JSON
+        }
+    }   
     """
 
 def test_루틴_생성_카테고리_선택하지_않을_때():
@@ -67,6 +85,15 @@ def test_루틴_생성_카테고리_선택하지_않을_때():
     # then
     """
     성공 값 전달
+     {
+        'message' : {
+            'status' : 'ROUTINE_CREATE_BAD_REQUEST',
+            'msg': '루틴 생성에 실패하셨습니다.'
+        },
+        'data': {
+            'detail': JSON
+        }
+    }
     """
 
 def test_루틴_생성_요일_값_전달받지_못할_때():
@@ -82,6 +109,15 @@ def test_루틴_생성_요일_값_전달받지_못할_때():
     # then
     """
     실패 값 전달
+     {
+        'message' : {
+            'status' : 'ROUTINE_CREATE_BAD_REQUEST',
+            'msg': '루틴 생성에 실패하셨습니다.'
+        },
+        'data': {
+            'detail': JSON
+        }
+    }    
     """
 
 def test_루틴_생성_알람보내기값이_null일_때():
@@ -97,6 +133,15 @@ def test_루틴_생성_알람보내기값이_null일_때():
     # then
     """
     성공 값 전달
+    {
+        'message' : {
+            'status' : 'ROUTINE_CREATE_OK',
+            'msg': '루틴 생성에 성공하셨습니다.'
+        },
+        'data': {
+            'success': true
+        }
+    }
     """
 
 def test_루틴_값_수정하는데_요일일_때():
@@ -117,6 +162,15 @@ def test_루틴_값_수정하는데_요일일_때():
     # then
     """
     merge => 그 이유는 기존 값도 클라에서 제공할 예정이라서
+    {
+        'message' : {
+            'status' : 'ROUTINE_UPDATE_OK',
+            'msg': '루틴 수정에 성공하셨습니다.'
+        },
+        'data': {
+            'success': true
+        }
+    }
     """
 
 def test_루틴_값_수정하는데_요일이_아닌_다른_것():
@@ -132,6 +186,15 @@ def test_루틴_값_수정하는데_요일이_아닌_다른_것():
     # then
     """
     성공 여부 전달
+    {
+        'message' : {
+            'status' : 'ROUTINE_UPDATE_OK',
+            'msg': '루틴 수정에 성공하셨습니다.'
+        },
+        'data': {
+            'success': true
+        }
+    }
     """
 
 def test_루틴_수행여부_값_저장():
@@ -158,6 +221,15 @@ def test_루틴_수행여부_값_저장():
     # then
     """
     성공 여부
+    {
+        'message' : {
+            'status' : 'ROUTINE_RESULT_CREATE_OK',
+            'msg': '루틴 결과 생성에 성공하셨습니다.'
+        },
+        'data': {
+            'success': true
+        }
+    }    
     """
 
 def test_루틴_수행여부_취소():
@@ -174,6 +246,15 @@ def test_루틴_수행여부_취소():
     # then
     """
     성공 여부 전달
+    {
+        'message' : {
+            'status' : 'ROUTINE_RESULT_CANCEL_OK',
+            'msg': '루틴 결과 취소에 성공하셨습니다.'
+        },
+        'data': {
+            'success': true
+        }
+    }
     """
 
 def test_루틴_삭제():
@@ -191,6 +272,15 @@ def test_루틴_삭제():
     # then
     """
     성공 여부 전달
+    {
+        'message' : {
+            'status' : 'ROUTINE_DELETE',
+            'msg': '루틴 삭제에 성공하셨습니다.'
+        },
+        'data': {
+            'success': true
+        }
+    }    
     """
 
 def test_루틴_전체_조회():
@@ -241,5 +331,14 @@ def test_루틴_순서_변경():
     # then
     """
     성공여부 전달
+    {
+        'message' : {
+            'status' : 'ROUTINE_CHANGE_OK',
+            'msg': '루틴 순서 변경에 성공하셨습니다.'
+        },
+        'data': {
+            'success': true
+        }
+    }
     """
 
