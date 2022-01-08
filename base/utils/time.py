@@ -18,7 +18,7 @@ def convert_str2date(date: str):
         return None
 
 
-class EndDay:
+class DateUtil:
     __MONTH = {
         1: 31,
         2: 28,
@@ -63,15 +63,14 @@ class EndDay:
     def prev_end_of_month(self, year, month):
         return self.end_of_month(year, month-1)
 
-    def next_end_of_month(self, year, month):
-        return self.end_of_month(year, month+1)
-
     def return_prev_start_date(self, date):
-        return (date - timedelta(days=self.prev_end_of_month(year=date.year, month=date.month))).replace(day=1)
+        delta = date.day
+        return (date - timedelta(days=delta)).replace(day=1)
 
-    def return_prev_end_date(self,date):
+    def return_prev_end_date(self, date):
+        delta = date.day
         return (
-                date - timedelta(days=self.prev_end_of_month(year=date.year, month=date.month))
+                date - timedelta(days=delta)
                 ).replace(day=self.prev_end_of_month(year=date.year, month=date.month))
 
     def return_prev_between_date(self, date):
