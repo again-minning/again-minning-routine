@@ -6,7 +6,7 @@ from decouple import config as de_config
 class DefaultSettings(BaseSettings):
     ENV_STATE: str = 'local'
     APP_ENV: str = 'local'
-    POSTGRES_URL: str
+    DATABASE_URL: str
 
     class Config:
         env_file = '.env'
@@ -22,6 +22,11 @@ class ProductionSettings(DefaultSettings):
         env_file = 'production.env'
 
 
+class TestSettings(DefaultSettings):
+    class Config:
+        env_file = 'test.env'
+
+
 class FactorySettings:
     @staticmethod
     def load():
@@ -30,6 +35,8 @@ class FactorySettings:
             return StagingSettings()
         elif env_state == DeployState.PRODUCTION.value:
             return ProductionSettings()
+        elif env_state == DeployState.TEST.value:
+            return TestSettings()
         else:
             return DefaultSettings()
 
