@@ -1,4 +1,4 @@
-from routine.models import routine, routineDay
+from routine.models import routine, routineDay, routineResult
 from retrospect.models import retrospect, snapshot
 from base.database.database import engine
 from base.database.database import Base
@@ -10,5 +10,6 @@ CONNECTION = (
     routine.Base.metadata.create_all(bind=engine),
     routineDay.Base.metadata.create_all(bind=engine),
     retrospect.Base.metadata.create_all(bind=engine),
-    snapshot.Base.metadata.create_all(bind=engine)
+    snapshot.Base.metadata.create_all(bind=engine),
+    routineResult.Base.metadata.create_all(bind=engine)
 )
