@@ -1,19 +1,23 @@
-from sqlalchemy import Column, Integer, TIMESTAMP, ForeignKey, Enum
-from sqlalchemy.sql import func
+from sqlalchemy import Column, Integer, ForeignKey, Enum
 from sqlalchemy.orm import relationship
+
 from base.database.database import Base
+from base.database.models.model import TimestampMixin
 from routine.constants.week import Week
 
 
-class RoutineDay(Base):
-    __tablename__ = 'routine_days'
+class RoutineDay(TimestampMixin, Base):
+
+    def __init__(self, sequence, day):
+        self.day = day
+        self.sequence = sequence
+
+    __tablename__ = 'routine_day'
 
     day = Column(Enum(Week), primary_key=True)
 
-    sequence = Column(Integer)
-
     routine = relationship('Routine', back_populates='days')
 
-    routine_id = Column(Integer, ForeignKey('routines.routine_id'), primary_key=True)
+    routine_id = Column(Integer, ForeignKey('routine.routine_id', ondelete='CASCADE'), primary_key=True)
 
-    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
+    sequence = Column(Integer)

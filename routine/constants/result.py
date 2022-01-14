@@ -6,3 +6,4 @@ class Result(str, Enum):
     NOT = 'NOT'
     TRY = 'TRY'
     DONE = 'DONE'
+    DEFAULT = 'DEFAULT'

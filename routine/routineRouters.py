@@ -1,26 +1,71 @@
+from typing import Optional, List
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-
+from config.settings import settings
 from base.database.database import get_db
 from base.utils.constants import HttpStatus
 from base.utils.message import Response, Message
-from routine.repository.routineRepository import create_routine, get_routine
-from routine.schemas import RoutineCreateRequest, RoutineCreateResponse
+from routine.repository.routineRepository import create_routine, get_routine_list, delete_routine_for_test,\
+    get_routine_for_test, get_routine_days_for_test, get_routine_results_for_test
+from routine.schemas import RoutineCreateRequest, SimpleSuccessResponse, RoutineElementResponse
 
 router = APIRouter(prefix='/api/v1/routine', tags=['routines'])
 
 
-@router.get('/{routine_id}')
-def get_routine_router(routine_id: int, db: Session = Depends(get_db)):
-    routine = get_routine(db, routine_id)
-    return routine
-
-
-@router.post('/create', response_model=Response[Message, RoutineCreateResponse])
-def create_routine_router(routine: RoutineCreateRequest, db: Session = Depends(get_db)):
-    save_routine = create_routine(db, routine)
-    response = Response[Message, RoutineCreateResponse](
-        message=Message(status=HttpStatus.ROUTINE_OK, msg='루틴 생성에 성공하셨습니다.'),
-        data=RoutineCreateResponse(routine_id=save_routine.routine_id, success=True)
-                        )
+@router.get('/{account_id}', response_model=Response[Message, Optional[List[RoutineElementResponse]]])
+def get_routine_list_router(account_id: int, today: Optional[str], db: Session = Depends(get_db)):
+    routines = get_routine_list(db, account_id, today)
+    data = [
+        RoutineElementResponse(
+            title=routine.title, id=routine.id,
+            goal=routine.goal, start_time=str(routine.start_time),
+            result=result.upper()
+        ) for routine, result in routines
+    ]
+    response = Response(
+        message=Message(status=HttpStatus.ROUTINE_LIST_OK, msg='루틴 조회에 성공하셨습니다.'),
+        data=data
+    )
     return response
+
+
+@router.post('', response_model=Response[Message, SimpleSuccessResponse])
+def create_routine_router(routine: RoutineCreateRequest, db: Session = Depends(get_db)):
+    success = create_routine(db, routine)
+    response = Response[Message, SimpleSuccessResponse](
+        message=Message(status=HttpStatus.ROUTINE_CREATE_OK, msg='루틴 생성에 성공하셨습니다.'),
+        data=SimpleSuccessResponse(success=success))
+    return response
+
+
+@router.delete('/test')
+def delete_for_test_router(db: Session = Depends(get_db)):
+    if settings.APP_ENV == 'test':
+        return delete_routine_for_test(db)
+    else:
+        return True
+
+
+@router.get('/test/routine/latest')
+def get_routine_latest_router(db: Session = Depends(get_db)):
+    if settings.APP_ENV == 'test':
+        return get_routine_for_test(db)
+    else:
+        return True
+
+
+@router.get('/test/routine-day/{routine_id}')
+def get_routine_latest_router(routine_id: int, db: Session = Depends(get_db)):
+    if settings.APP_ENV == 'test':
+        return get_routine_days_for_test(db, routine_id)
+    else:
+        return True
+
+
+@router.get('/test/routine-results/{routine_id}')
+def get_routine_latest_router(routine_id: int, db: Session = Depends(get_db)):
+    if settings.APP_ENV == 'test':
+        return get_routine_results_for_test(db, routine_id)
+    else:
+        return True
