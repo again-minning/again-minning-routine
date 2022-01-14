@@ -19,13 +19,13 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content=jsonable_encoder(
             {
-                "method": request.scope['method'],
-                "type": request.scope['type'],
-                "path": request.scope['path'],
-                "path_params": request.scope['path_params'],
-                "server": request.scope['server'],
-                "detail": exc.errors(),
-                "body": exc.body
+                'method': request.scope['method'],
+                'type': request.scope['type'],
+                'path': request.scope['path'],
+                'path_params': request.scope['path_params'],
+                'server': request.scope['server'],
+                'detail': exc.errors(),
+                'body': exc.body
             }
         )
     )
