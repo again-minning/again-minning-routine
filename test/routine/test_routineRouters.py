@@ -1,150 +1,274 @@
+import datetime
+
 from assertpy import assert_that
 
-from main import app
-from fastapi.testclient import TestClient
+from base.utils.time import get_now
+from routine.constants.week import Week
+from test.app import client
 
-client = TestClient(app)
+client = client
 
 
-def test_루틴_생성_테스트():
-    request = {
-        'title': 'hello',
+def test_루틴_생성_성공했을_때(client):
+    # given
+    data = {
+        'title': 'wake_up',
         'account_id': 1,
-        'category': 0,
-        'goal': 'world',
-        'start_time': '10:30:00',
+        'category': 1,
+        'goal': 'daily',
+        'is_alarm': True,
+        'start_time': '10:00:00',
         'days': ['MON', 'WED', 'FRI']
     }
-    response = client.request('post', '/api/v1/routine/create', json=request)
-    assert_that(response.status_code).is_not_equal_to('200')
+    # when
+    response = client.post(
+        '/api/v1/routine',
+        json=data
+    )
+    # then
     result = response.json()
-    assert_that(result).is_not_none()
-    data = result['data']
-    assert_that(data['success']).is_true()
-    assert_that(result['message']).is_equal_to({'status': 'ROUTINE_OK', 'msg': '루틴 생성에 성공하셨습니다.'})
+    message = result['message']
+    body = result['data']
+    assert_that(message['status']).is_equal_to('ROUTINE_CREATE_OK')
+    assert_that(message['msg']).is_equal_to('루틴 생성에 성공하셨습니다.')
+    assert_that(body['success']).is_true()
+    client.delete('/api/v1/routine/test')
 
 
-def test_루틴_생성_성공했을_때():
+def test_루틴_생성이_해당_수행하는_요일과_맞을_때(client):
     # given
-    """
-    @:parameter: 루틴 이름, 루틴 목표, 카테고리, 루틴 요일, 루틴 시간 여부, 알람 여부, 유저 아이디,
-    :return:
-    """
-    # when
-    """
-    repository 통해 생성
-    """
-    # then
-    """
-    단순히 성공 여부만 전달
-    {
-        'message' : {
-            'status' : 'ROUTINE_CREATE_OK',
-            'msg': '루틴 생성에 성공하셨습니다.'
-        },
-        'data': {
-            'success': true
-        }
+    data = {
+        'title': 'time_test',
+        'account_id': 1,
+        'category': 1,
+        'goal': 'daily',
+        'is_alarm': True,
+        'start_time': '10:00:00',
+        'days': ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
     }
-    """
-
-def test_루틴_생성_루틴_이름_공백일_때():
-    # given
-    """
-    루틴 이름 또는 루틴 목표가 공백일 때
-    :return:
-    """
     # when
-    """
-    사전 validation에서 필터링
-    """
-    # then
-    """
-    실패 값 전달
-     {
-        'message' : {
-            'status' : 'ROUTINE_CREATE_BAD_REQUEST',
-            'msg': '루틴 생성에 실패하셨습니다.'
-        },
-        'data': {
-            'detail': JSON
-        }
-    }   
-    """
+    response = client.post(
+        '/api/v1/routine',
+        json=data
+    )
+    assert_that(response.status_code).is_equal_to(200)
+    routine_response = client.get(
+        '/api/v1/routine/test/routine/latest'
+    )
+    routine = routine_response.json()
+    routine_id = routine['id']
+    assert_that(routine['title']).is_equal_to(data['title'])
+    assert_that(routine['category']).is_equal_to(data['category'])
+    assert_that(routine['goal']).is_equal_to(data['goal'])
+    assert_that(routine['account_id']).is_equal_to(data['account_id'])
+    assert_that(routine['is_alarm']).is_true()
+    routine_day_response = client.get(
+        f'/api/v1/routine/test/routine-day/{routine_id}'
+    )
+    routine_day = routine_day_response.json()
+    assert_that(len(routine_day)).is_equal_to(7)
+    routine_results_response = client.get(
+        f'/api/v1/routine/test/routine-results/{routine_id}'
+    )
+    routine_results = routine_results_response.json()
+    assert_that(routine_results[0]['result']).is_equal_to('NOT')
+    client.delete('/api/v1/routine/test')
 
-def test_루틴_생성_카테고리_선택하지_않을_때():
+
+def test_루틴_생성이_해당_수행하는_요일과_맞지_않을때(client):
+    # mocking이 잘 안된다. 우선 찾을 때까지 이 방식으로 진행
+    now_weekday = datetime.datetime.now().weekday()
+    days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
+    days.remove(Week.get_weekday(now_weekday))
     # given
-    """
-    카테고리 값이 null로 들어올 때
-    :return:
-    """
-    # when
-    """
-    default로 etc로 지정
-    """
-    # then
-    """
-    성공 값 전달
-     {
-        'message' : {
-            'status' : 'ROUTINE_CREATE_BAD_REQUEST',
-            'msg': '루틴 생성에 실패하셨습니다.'
-        },
-        'data': {
-            'detail': JSON
-        }
+    data = {
+        'title': 'time_test',
+        'account_id': 1,
+        'category': 1,
+        'goal': 'daily',
+        'is_alarm': True,
+        'start_time': '10:00:00',
+        'days': days
     }
-    """
-
-def test_루틴_생성_요일_값_전달받지_못할_때():
-    # given
-    """
-    루틴 값을 받지 못했을 때
-    :return:
-    """
     # when
-    """
-    validation으로 '루틴 요일을 선택해주세요' 와 비슷한 문구와 함께 에러 발생
-    """
-    # then
-    """
-    실패 값 전달
-     {
-        'message' : {
-            'status' : 'ROUTINE_CREATE_BAD_REQUEST',
-            'msg': '루틴 생성에 실패하셨습니다.'
-        },
-        'data': {
-            'detail': JSON
-        }
-    }    
-    """
+    response = client.post(
+        '/api/v1/routine',
+        json=data
+    )
+    assert_that(response.status_code).is_equal_to(200)
+    routine_response = client.get(
+        '/api/v1/routine/test/routine/latest'
+    )
+    routine = routine_response.json()
+    routine_id = routine['id']
+    routine_results_response = client.get(
+        f'/api/v1/routine/test/routine-results/{routine_id}'
+    )
+    routine_results = routine_results_response.json()
+    assert_that(routine_results[0]['result']).is_equal_to('DEFAULT')
+    client.delete('/api/v1/routine/test')
 
-def test_루틴_생성_알람보내기값이_null일_때():
+
+def test_루틴_생성_루틴_이름_공백일_때(client):
     # given
-    """
-    알람 보내기 값이 null 일 때
-    :return:
-    """
-    # when
-    """
-    default 로 false 값으로 생성
-    """
-    # then
-    """
-    성공 값 전달
-    {
-        'message' : {
-            'status' : 'ROUTINE_CREATE_OK',
-            'msg': '루틴 생성에 성공하셨습니다.'
-        },
-        'data': {
-            'success': true
-        }
+    data = {
+        'title': '',
+        'account_id': 1,
+        'category': 1,
+        'goal': 'daily',
+        'is_alarm': True,
+        'start_time': '10:00:00',
+        'days': ['MON', 'WED', 'FRI']
     }
-    """
+    # when
+    response = client.post(
+        '/api/v1/routine',
+        json=data
+    )
+    # then
+    result = response.json()
+    method = result['method']
+    path = result['path']
+    detail = result['detail']
+    detail = detail[0]
+    msg = detail['msg']
+    error_type = detail['type']
+    body = result['body']
+    assert_that(method).is_equal_to('POST')
+    assert_that(path).is_equal_to('/api/v1/routine')
+    assert_that(msg).is_equal_to('제목 문구를 적어주세요.')
+    assert_that(error_type).is_equal_to('value_error')
+    assert_that(body).is_equal_to(data)
 
-def test_루틴_값_수정하는데_요일일_때():
+
+def test_루틴_생성_카테고리_선택하지_않을_때(client):
+    # given
+    data = {
+        'title': 'wake_up',
+        'account_id': 1,
+        'goal': 'daily',
+        'is_alarm': True,
+        'start_time': '10:00:00',
+        'days': ['MON', 'WED', 'FRI']
+    }
+    # when
+    response = client.post(
+        '/api/v1/routine',
+        json=data
+    )
+    # then
+    result = response.json()
+    method = result['method']
+    path = result['path']
+    detail = result['detail']
+    detail = detail[0]
+    msg = detail['msg']
+    error_type = detail['type']
+    body = result['body']
+    assert_that(method).is_equal_to('POST')
+    assert_that(path).is_equal_to('/api/v1/routine')
+    assert_that(msg).is_equal_to('field required')
+    assert_that(error_type).is_equal_to('value_error.missing')
+    assert_that(body).is_equal_to(data)
+
+
+def test_루틴_생성_요일_값_전달받지_못할_때(client):
+    # given
+    data = {
+        'title': 'wake_up',
+        'account_id': 1,
+        'category': 1,
+        'goal': 'daily',
+        'is_alarm': True,
+        'start_time': '10:00:00'
+    }
+    # when
+    response = client.post(
+        '/api/v1/routine',
+        json=data
+    )
+    # then
+    result = response.json()
+    method = result['method']
+    path = result['path']
+    detail = result['detail']
+    detail = detail[0]
+    msg = detail['msg']
+    error_type = detail['type']
+    body = result['body']
+    assert_that(method).is_equal_to('POST')
+    assert_that(path).is_equal_to('/api/v1/routine')
+    assert_that(msg).is_equal_to('최소 한 개의 요일을 선택해주세요')
+    assert_that(error_type).is_equal_to('value_error')
+    assert_that(body).is_equal_to(data)
+
+
+def test_루틴_생성_알람보내기값이_null일_때(client):
+    # given
+    data = {
+        'title': 'is_alarm',
+        'account_id': 1,
+        'category': 1,
+        'goal': 'daily',
+        'start_time': '10:00:00',
+        'days': ['MON', 'WED', 'FRI']
+    }
+    # when
+    response = client.post(
+        '/api/v1/routine',
+        json=data
+    )
+    # then
+    result = response.json()
+    message = result['message']
+    body = result['data']
+    assert_that(message['status']).is_equal_to('ROUTINE_CREATE_OK')
+    assert_that(message['msg']).is_equal_to('루틴 생성에 성공하셨습니다.')
+    assert_that(body['success']).is_true()
+    client.delete('/api/v1/routine/test')
+
+
+def test_루틴_전체조회(client):
+    # given
+    data = {
+        'title': 'yes',
+        'account_id': 1,
+        'category': 1,
+        'goal': 'daily',
+        'start_time': '10:00:00',
+        'days': ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
+    }
+    client.post(
+        '/api/v1/routine',
+        json=data
+    )
+    account_id = 1
+    today = get_now()
+    # when
+    response = client.get(
+        f'/api/v1/routine/{account_id}?today={today.strftime("%Y-%m-%d")}',
+    )
+    result = response.json()
+    message = result['message']
+    body = result['data'][0]
+    # then
+    assert_that(message['status']).is_equal_to('ROUTINE_LIST_OK')
+    assert_that(message['msg']).is_equal_to('루틴 조회에 성공하셨습니다.')
+    assert_that(body['title']).is_equal_to(data['title'])
+    assert_that(body['goal']).is_equal_to(data['goal'])
+    assert_that(body['start_time']).is_equal_to(data['start_time'])
+    assert_that(body['result']).is_equal_to('NOT')
+
+
+def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_가져오는지(client):
+    # TODO
+    """
+    현재 잘 안됨
+    다음 이슈에서 진행해야 할 것 같다. 너무 길어짐 ...
+    """
+    pass
+
+def test_루틴_값_수정하는데_요일일_때(client):
     # given
     """
     기존 루틴 값 그대로, 루틴 요일 변경
@@ -173,7 +297,8 @@ def test_루틴_값_수정하는데_요일일_때():
     }
     """
 
-def test_루틴_값_수정하는데_요일이_아닌_다른_것():
+
+def test_루틴_값_수정하는데_요일이_아닌_다른_것(client):
     # given
     """
     루틴 생성 값 그대로 받아 들임
@@ -197,7 +322,8 @@ def test_루틴_값_수정하는데_요일이_아닌_다른_것():
     }
     """
 
-def test_루틴_수행여부_값_저장():
+
+def test_루틴_수행여부_값_저장(client):
     # given
     """
     루틴 수행 여부 값, 루틴 아이디, 해당 날짜
@@ -205,7 +331,7 @@ def test_루틴_수행여부_값_저장():
     루틴 수행 여부 저장하는 테이블
 
     TABLE
-    고유 아이디 | 루틴 아이디 | 루틴 데이 아이디 | 루틴 수행 여부 | 해당 날짜 |체크한 시간
+    고유 아이디 | 루틴 아이디 | 해당 수행 요일 | 루틴 수행 여부 | 해당 날짜
 
     :return:
     """
@@ -232,7 +358,8 @@ def test_루틴_수행여부_값_저장():
     }    
     """
 
-def test_루틴_수행여부_취소():
+
+def test_루틴_수행여부_취소(client):
     # given
     """
     수행요일 확인
@@ -257,7 +384,8 @@ def test_루틴_수행여부_취소():
     }
     """
 
-def test_루틴_삭제():
+
+def test_루틴_삭제(client):
     # given
     """
     :parameter: 루틴 아이디, 유저 아이디
@@ -283,42 +411,8 @@ def test_루틴_삭제():
     }    
     """
 
-def test_루틴_전체_조회():
-    # given
-    """
-    @:param: 유저 아이디
-    :return:
-    """
-    # when
-    """
-    루틴 전체 조회
-    repository 조회
-    """
-    # then
-    """
-        [
-        {
-            "routine_id" : 1,
-            "title" : "아침에 신문 읽기",
-            "aim": "시사경영 3개씩 매일 읽기",
-            "start_time": "07:00",
-            "routine_result": {
-                result: "DONE"
-            }
-        },
-        {
-            "routine_id" : 2,
-            "title" : "아침에 시리얼 먹기",
-            "aim": "냠냠",
-            "start_time": "06:00",
-            "routine_result": {
-                result: "YET"
-            }
-        },
-    ]
-    """
-    
-def test_루틴_순서_변경():
+
+def test_루틴_순서_변경(client):
     # given
     """
     @:param: list(루틴아이디, 순서), 유저 아이디
@@ -341,4 +435,3 @@ def test_루틴_순서_변경():
         }
     }
     """
-

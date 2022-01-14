@@ -6,3 +6,4 @@ class DeployState(Enum):
     LOCAL = 'local'
     STAGING = 'staging'
     PRODUCTION = 'production'
+    TEST = 'test'

@@ -5,4 +5,5 @@ from enum import Enum, unique
 class HttpStatus(Enum):
     OK = 'OK'
     ROUTINE_OK = 'ROUTINE_OK'
+    ROUTINE_LIST_OK = 'ROUTINE_LIST_OK'
     ROUTINE_CREATE_OK = 'ROUTINE_CREATE_OK'

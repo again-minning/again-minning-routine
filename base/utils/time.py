@@ -1,5 +1,24 @@
+
 from dateutil.parser import parse, ParserError
 from datetime import timedelta
+from pytz import timezone, utc
+import datetime
+
+KST = timezone('Asia/Seoul')
+
+
+def get_now() -> datetime.datetime:
+    now = datetime.datetime.utcnow()
+    return utc.localize(now).astimezone(KST)
+
+
+def default_date():
+    return datetime.datetime.fromisoformat('1900-01-01')
+
+
+def get_today_end():
+    tomorrow = get_now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+    return tomorrow - timedelta(microseconds=1)
 
 
 def convert_str2time(time: str):
@@ -61,7 +80,7 @@ class DateUtil:
         return self.__MONTH[month]
 
     def prev_end_of_month(self, year, month):
-        return self.end_of_month(year, month-1)
+        return self.end_of_month(year, month - 1)
 
     def return_prev_start_date(self, date):
         delta = date.day
@@ -71,7 +90,7 @@ class DateUtil:
         delta = date.day
         return (
                 date - timedelta(days=delta)
-                ).replace(day=self.prev_end_of_month(year=date.year, month=date.month))
+        ).replace(day=self.prev_end_of_month(year=date.year, month=date.month))
 
     def return_prev_between_date(self, date):
         return self.return_prev_start_date(date), self.return_prev_end_date(date)
