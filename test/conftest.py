@@ -10,7 +10,7 @@ from base.database.database import SessionLocal, get_db
 from main import app
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="session")
 def db() -> Generator:
     db: Session = SessionLocal()
     yield db
