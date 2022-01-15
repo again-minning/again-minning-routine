@@ -6,8 +6,7 @@ from config.settings import settings
 from base.database.database import get_db
 from base.utils.constants import HttpStatus
 from base.utils.message import Response, Message
-from routine.repository.routineRepository import create_routine, get_routine_list, delete_routine_for_test,\
-    get_routine_for_test, get_routine_days_for_test, get_routine_results_for_test
+from routine.repository.routineRepository import create_routine, get_routine_list, delete_routine_for_test
 from routine.schemas import RoutineCreateRequest, SimpleSuccessResponse, RoutineElementResponse
 
 router = APIRouter(prefix='/api/v1/routine', tags=['routines'])
@@ -43,29 +42,5 @@ def create_routine_router(routine: RoutineCreateRequest, db: Session = Depends(g
 def delete_for_test_router(db: Session = Depends(get_db)):
     if settings.APP_ENV == 'test':
         return delete_routine_for_test(db)
-    else:
-        return True
-
-
-@router.get('/test/routine/latest')
-def get_routine_latest_router(db: Session = Depends(get_db)):
-    if settings.APP_ENV == 'test':
-        return get_routine_for_test(db)
-    else:
-        return True
-
-
-@router.get('/test/routine-day/{routine_id}')
-def get_routine_latest_router(routine_id: int, db: Session = Depends(get_db)):
-    if settings.APP_ENV == 'test':
-        return get_routine_days_for_test(db, routine_id)
-    else:
-        return True
-
-
-@router.get('/test/routine-results/{routine_id}')
-def get_routine_latest_router(routine_id: int, db: Session = Depends(get_db)):
-    if settings.APP_ENV == 'test':
-        return get_routine_results_for_test(db, routine_id)
     else:
         return True

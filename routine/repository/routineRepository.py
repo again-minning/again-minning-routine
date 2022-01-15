@@ -58,18 +58,3 @@ def delete_routine_for_test(db: Session):
     db.query(RoutineResult).delete()
     db.query(Routine).delete()
     return True
-
-
-def get_routine_for_test(db: Session):
-    routine = db.query(Routine).order_by(desc(Routine.id)).first()
-    return routine
-
-
-def get_routine_days_for_test(db: Session, routine_id: int):
-    routine_days = db.query(RoutineDay).filter(RoutineDay.routine_id == routine_id).all()
-    return routine_days
-
-
-def get_routine_results_for_test(db: Session, routine_id: int):
-    routine_results = db.query(RoutineResult).filter(RoutineResult.routine_id == routine_id).all()
-    return routine_results

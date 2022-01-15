@@ -1,15 +1,21 @@
 import datetime
 
 from assertpy import assert_that
+from sqlalchemy import desc
+from sqlalchemy.orm import Session
+from starlette.testclient import TestClient
 
 from base.utils.time import get_now
 from routine.constants.week import Week
-from test.app import client
+from routine.models.routine import Routine
+from routine.models.routineDay import RoutineDay
+from routine.models.routineResult import RoutineResult
+from test.conftest import client
 
 client = client
 
 
-def test_루틴_생성_성공했을_때(client):
+def test_루틴_생성_성공했을_때(client: TestClient):
     # given
     data = {
         'title': 'wake_up',
@@ -35,7 +41,7 @@ def test_루틴_생성_성공했을_때(client):
     client.delete('/api/v1/routine/test')
 
 
-def test_루틴_생성이_해당_수행하는_요일과_맞을_때(client):
+def test_루틴_생성이_해당_수행하는_요일과_맞을_때(db: Session, client: TestClient):
     # given
     data = {
         'title': 'time_test',
@@ -52,31 +58,24 @@ def test_루틴_생성이_해당_수행하는_요일과_맞을_때(client):
         json=data
     )
     assert_that(response.status_code).is_equal_to(200)
-    routine_response = client.get(
-        '/api/v1/routine/test/routine/latest'
-    )
-    routine = routine_response.json()
-    routine_id = routine['id']
-    assert_that(routine['title']).is_equal_to(data['title'])
-    assert_that(routine['category']).is_equal_to(data['category'])
-    assert_that(routine['goal']).is_equal_to(data['goal'])
-    assert_that(routine['account_id']).is_equal_to(data['account_id'])
-    assert_that(routine['is_alarm']).is_true()
-    routine_day_response = client.get(
-        f'/api/v1/routine/test/routine-day/{routine_id}'
-    )
-    routine_day = routine_day_response.json()
+    # select routine
+    routine = db.query(Routine).order_by(desc(Routine.id)).first()
+    routine_id = routine.id
+    assert_that(routine.title).is_equal_to(data['title'])
+    assert_that(routine.category.value).is_equal_to(data['category'])
+    assert_that(routine.goal).is_equal_to(data['goal'])
+    assert_that(routine.account_id).is_equal_to(data['account_id'])
+    assert_that(routine.is_alarm).is_true()
+    # select routine_day
+    routine_day = db.query(RoutineDay).filter(RoutineDay.routine_id == routine_id).all()
     assert_that(len(routine_day)).is_equal_to(7)
-    routine_results_response = client.get(
-        f'/api/v1/routine/test/routine-results/{routine_id}'
-    )
-    routine_results = routine_results_response.json()
-    assert_that(routine_results[0]['result']).is_equal_to('NOT')
+    # select routine_results
+    routine_results = db.query(RoutineResult).filter(RoutineResult.routine_id == routine_id).all()
+    assert_that(routine_results[0].result).is_equal_to('NOT')
     client.delete('/api/v1/routine/test')
 
 
-def test_루틴_생성이_해당_수행하는_요일과_맞지_않을때(client):
-    # mocking이 잘 안된다. 우선 찾을 때까지 이 방식으로 진행
+def test_루틴_생성이_해당_수행하는_요일과_맞지_않을때(db: Session, client: TestClient):
     now_weekday = datetime.datetime.now().weekday()
     days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
     days.remove(Week.get_weekday(now_weekday))
@@ -96,20 +95,14 @@ def test_루틴_생성이_해당_수행하는_요일과_맞지_않을때(client)
         json=data
     )
     assert_that(response.status_code).is_equal_to(200)
-    routine_response = client.get(
-        '/api/v1/routine/test/routine/latest'
-    )
-    routine = routine_response.json()
-    routine_id = routine['id']
-    routine_results_response = client.get(
-        f'/api/v1/routine/test/routine-results/{routine_id}'
-    )
-    routine_results = routine_results_response.json()
-    assert_that(routine_results[0]['result']).is_equal_to('DEFAULT')
+    routine = db.query(Routine).order_by(desc(Routine.id)).first()
+    routine_id = routine.id
+    routine_results = db.query(RoutineResult).filter(RoutineResult.routine_id == routine_id).all()
+    assert_that(routine_results[0].result).is_equal_to('DEFAULT')
     client.delete('/api/v1/routine/test')
 
 
-def test_루틴_생성_루틴_이름_공백일_때(client):
+def test_루틴_생성_루틴_이름_공백일_때(client: TestClient):
     # given
     data = {
         'title': '',
@@ -141,7 +134,7 @@ def test_루틴_생성_루틴_이름_공백일_때(client):
     assert_that(body).is_equal_to(data)
 
 
-def test_루틴_생성_카테고리_선택하지_않을_때(client):
+def test_루틴_생성_카테고리_선택하지_않을_때(client: TestClient):
     # given
     data = {
         'title': 'wake_up',
@@ -172,7 +165,7 @@ def test_루틴_생성_카테고리_선택하지_않을_때(client):
     assert_that(body).is_equal_to(data)
 
 
-def test_루틴_생성_요일_값_전달받지_못할_때(client):
+def test_루틴_생성_요일_값_전달받지_못할_때(client: TestClient):
     # given
     data = {
         'title': 'wake_up',
@@ -203,7 +196,7 @@ def test_루틴_생성_요일_값_전달받지_못할_때(client):
     assert_that(body).is_equal_to(data)
 
 
-def test_루틴_생성_알람보내기값이_null일_때(client):
+def test_루틴_생성_알람보내기값이_null일_때(db: Session, client: TestClient):
     # given
     data = {
         'title': 'is_alarm',
@@ -228,7 +221,7 @@ def test_루틴_생성_알람보내기값이_null일_때(client):
     client.delete('/api/v1/routine/test')
 
 
-def test_루틴_전체조회(client):
+def test_루틴_전체조회(client: TestClient):
     # given
     data = {
         'title': 'yes',
@@ -260,7 +253,7 @@ def test_루틴_전체조회(client):
     assert_that(body['result']).is_equal_to('NOT')
 
 
-def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_가져오는지(client):
+def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_가져오는지(client: TestClient):
     # TODO
     """
     현재 잘 안됨
@@ -268,7 +261,7 @@ def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_�
     """
     pass
 
-def test_루틴_값_수정하는데_요일일_때(client):
+def test_루틴_값_수정하는데_요일일_때(client: TestClient):
     # given
     """
     기존 루틴 값 그대로, 루틴 요일 변경
@@ -298,7 +291,7 @@ def test_루틴_값_수정하는데_요일일_때(client):
     """
 
 
-def test_루틴_값_수정하는데_요일이_아닌_다른_것(client):
+def test_루틴_값_수정하는데_요일이_아닌_다른_것(client: TestClient):
     # given
     """
     루틴 생성 값 그대로 받아 들임
@@ -323,7 +316,7 @@ def test_루틴_값_수정하는데_요일이_아닌_다른_것(client):
     """
 
 
-def test_루틴_수행여부_값_저장(client):
+def test_루틴_수행여부_값_저장(client: TestClient):
     # given
     """
     루틴 수행 여부 값, 루틴 아이디, 해당 날짜
@@ -359,7 +352,7 @@ def test_루틴_수행여부_값_저장(client):
     """
 
 
-def test_루틴_수행여부_취소(client):
+def test_루틴_수행여부_취소(client: TestClient):
     # given
     """
     수행요일 확인
@@ -385,7 +378,7 @@ def test_루틴_수행여부_취소(client):
     """
 
 
-def test_루틴_삭제(client):
+def test_루틴_삭제(client: TestClient):
     # given
     """
     :parameter: 루틴 아이디, 유저 아이디
@@ -412,7 +405,7 @@ def test_루틴_삭제(client):
     """
 
 
-def test_루틴_순서_변경(client):
+def test_루틴_순서_변경(client: TestClient):
     # given
     """
     @:param: list(루틴아이디, 순서), 유저 아이디
