@@ -10,9 +10,7 @@ from routine.constants.week import Week
 from routine.models.routine import Routine
 from routine.models.routineDay import RoutineDay
 from routine.models.routineResult import RoutineResult
-from test.conftest import client, complex_transaction
-
-client = client
+from test.conftest import complex_transaction
 
 
 @complex_transaction
