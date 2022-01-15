@@ -1,24 +1,17 @@
 import importlib
 import os
 from pathlib import Path
+from typing import Generator
 
 import pytest
-from sqlalchemy.orm import Session
 from starlette.testclient import TestClient
 
-from main import app
-from base.database.database import SessionLocal, get_db
+from base.database.database import SessionLocal
 
 
-def override_get_db():
-    db: Session = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-app.dependency_overrides[get_db] = override_get_db
+@pytest.fixture(scope="session")
+def db() -> Generator:
+    yield SessionLocal()
 
 
 @pytest.fixture(scope='module')
