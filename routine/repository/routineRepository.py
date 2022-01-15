@@ -1,5 +1,5 @@
 from sqlalchemy import and_
-from sqlalchemy import case, desc
+from sqlalchemy import case
 from sqlalchemy.orm import Session, load_only
 
 from base.utils.time import convert_str2time, convert_str2date
@@ -49,12 +49,4 @@ def create_routine(db: Session, routine: RoutineCreateRequest):
 
     db_routine.add_days(days)
     db.add(db_routine)
-    db.commit()
-    return True
-
-
-def delete_routine_for_test(db: Session):
-    db.query(RoutineDay).delete()
-    db.query(RoutineResult).delete()
-    db.query(Routine).delete()
     return True

@@ -1,34 +1,50 @@
-import importlib
-import os
-from pathlib import Path
 from typing import Generator
 
 import pytest
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
 from starlette.testclient import TestClient
 
-from base.database.database import SessionLocal
+from base.database.connection import models
+from base.database.database import SessionLocal, get_db
+from main import app
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="class")
 def db() -> Generator:
-    yield SessionLocal()
+    db: Session = SessionLocal()
+    yield db
+    db.rollback()
+    db.close()
 
 
-@pytest.fixture(scope='module')
-def client(tmp_path_factory: pytest.TempPathFactory):
-    tmp_path = tmp_path_factory.mktemp("data")
-    cwd = os.getcwd()
-    os.chdir(tmp_path)
-    test_db = Path("./test.db")
-    if test_db.is_file():  # pragma: nocover
-        test_db.unlink()
-    # Import while creating the client to create the DB after starting the test session
-    import main
+def override_get_db():
+    db: Session = SessionLocal()
+    try:
+        yield db
+        db.commit()
+    except HTTPException as e:
+        db.rollback()
+    finally:
+        db.close()
 
-    # Ensure import side effects are re-executed
-    importlib.reload(main)
-    with TestClient(main.app) as c:
+
+app.dependency_overrides[get_db] = override_get_db
+
+
+@pytest.fixture(scope="module")
+def client() -> Generator:
+    with TestClient(app) as c:
         yield c
-    if test_db.is_file():  # pragma: nocover
-        test_db.unlink()
-    os.chdir(cwd)
+
+
+def complex_transaction(func):
+    def inner(db: Session, client: TestClient):
+        ret = func(db, client)
+        for model in models:
+            db.query(model).delete()
+        db.commit()
+        return ret
+    return inner
+
+

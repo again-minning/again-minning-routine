@@ -10,12 +10,13 @@ from routine.constants.week import Week
 from routine.models.routine import Routine
 from routine.models.routineDay import RoutineDay
 from routine.models.routineResult import RoutineResult
-from test.conftest import client
+from test.conftest import client, complex_transaction
 
 client = client
 
 
-def test_루틴_생성_성공했을_때(client: TestClient):
+@complex_transaction
+def test_루틴_생성_성공했을_때(db: Session, client: TestClient):
     # given
     data = {
         'title': 'wake_up',
@@ -38,9 +39,9 @@ def test_루틴_생성_성공했을_때(client: TestClient):
     assert_that(message['status']).is_equal_to('ROUTINE_CREATE_OK')
     assert_that(message['msg']).is_equal_to('루틴 생성에 성공하셨습니다.')
     assert_that(body['success']).is_true()
-    client.delete('/api/v1/routine/test')
 
 
+@complex_transaction
 def test_루틴_생성이_해당_수행하는_요일과_맞을_때(db: Session, client: TestClient):
     # given
     data = {
@@ -72,9 +73,9 @@ def test_루틴_생성이_해당_수행하는_요일과_맞을_때(db: Session, 
     # select routine_results
     routine_results = db.query(RoutineResult).filter(RoutineResult.routine_id == routine_id).all()
     assert_that(routine_results[0].result).is_equal_to('NOT')
-    client.delete('/api/v1/routine/test')
 
 
+@complex_transaction
 def test_루틴_생성이_해당_수행하는_요일과_맞지_않을때(db: Session, client: TestClient):
     now_weekday = datetime.datetime.now().weekday()
     days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
@@ -99,10 +100,9 @@ def test_루틴_생성이_해당_수행하는_요일과_맞지_않을때(db: Ses
     routine_id = routine.id
     routine_results = db.query(RoutineResult).filter(RoutineResult.routine_id == routine_id).all()
     assert_that(routine_results[0].result).is_equal_to('DEFAULT')
-    client.delete('/api/v1/routine/test')
 
 
-def test_루틴_생성_루틴_이름_공백일_때(client: TestClient):
+def test_루틴_생성_루틴_이름_공백일_때(db: Session, client: TestClient):
     # given
     data = {
         'title': '',
@@ -134,7 +134,8 @@ def test_루틴_생성_루틴_이름_공백일_때(client: TestClient):
     assert_that(body).is_equal_to(data)
 
 
-def test_루틴_생성_카테고리_선택하지_않을_때(client: TestClient):
+@complex_transaction
+def test_루틴_생성_카테고리_선택하지_않을_때(db: Session, client: TestClient):
     # given
     data = {
         'title': 'wake_up',
@@ -165,7 +166,8 @@ def test_루틴_생성_카테고리_선택하지_않을_때(client: TestClient):
     assert_that(body).is_equal_to(data)
 
 
-def test_루틴_생성_요일_값_전달받지_못할_때(client: TestClient):
+@complex_transaction
+def test_루틴_생성_요일_값_전달받지_못할_때(db: Session, client: TestClient):
     # given
     data = {
         'title': 'wake_up',
@@ -196,6 +198,7 @@ def test_루틴_생성_요일_값_전달받지_못할_때(client: TestClient):
     assert_that(body).is_equal_to(data)
 
 
+@complex_transaction
 def test_루틴_생성_알람보내기값이_null일_때(db: Session, client: TestClient):
     # given
     data = {
@@ -218,10 +221,10 @@ def test_루틴_생성_알람보내기값이_null일_때(db: Session, client: Te
     assert_that(message['status']).is_equal_to('ROUTINE_CREATE_OK')
     assert_that(message['msg']).is_equal_to('루틴 생성에 성공하셨습니다.')
     assert_that(body['success']).is_true()
-    client.delete('/api/v1/routine/test')
 
 
-def test_루틴_전체조회(client: TestClient):
+@complex_transaction
+def test_루틴_전체조회(db: Session, client: TestClient):
     # given
     data = {
         'title': 'yes',
@@ -253,7 +256,7 @@ def test_루틴_전체조회(client: TestClient):
     assert_that(body['result']).is_equal_to('NOT')
 
 
-def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_가져오는지(client: TestClient):
+def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_가져오는지(db: Session, client: TestClient):
     # TODO
     """
     현재 잘 안됨
@@ -261,7 +264,7 @@ def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_�
     """
     pass
 
-def test_루틴_값_수정하는데_요일일_때(client: TestClient):
+def test_루틴_값_수정하는데_요일일_때(db: Session, client: TestClient):
     # given
     """
     기존 루틴 값 그대로, 루틴 요일 변경
@@ -291,7 +294,7 @@ def test_루틴_값_수정하는데_요일일_때(client: TestClient):
     """
 
 
-def test_루틴_값_수정하는데_요일이_아닌_다른_것(client: TestClient):
+def test_루틴_값_수정하는데_요일이_아닌_다른_것(db: Session, client: TestClient):
     # given
     """
     루틴 생성 값 그대로 받아 들임
@@ -316,7 +319,7 @@ def test_루틴_값_수정하는데_요일이_아닌_다른_것(client: TestClie
     """
 
 
-def test_루틴_수행여부_값_저장(client: TestClient):
+def test_루틴_수행여부_값_저장(db: Session, client: TestClient):
     # given
     """
     루틴 수행 여부 값, 루틴 아이디, 해당 날짜
@@ -352,7 +355,7 @@ def test_루틴_수행여부_값_저장(client: TestClient):
     """
 
 
-def test_루틴_수행여부_취소(client: TestClient):
+def test_루틴_수행여부_취소(db: Session, client: TestClient):
     # given
     """
     수행요일 확인
@@ -378,7 +381,7 @@ def test_루틴_수행여부_취소(client: TestClient):
     """
 
 
-def test_루틴_삭제(client: TestClient):
+def test_루틴_삭제(db: Session, client: TestClient):
     # given
     """
     :parameter: 루틴 아이디, 유저 아이디
@@ -405,7 +408,7 @@ def test_루틴_삭제(client: TestClient):
     """
 
 
-def test_루틴_순서_변경(client: TestClient):
+def test_루틴_순서_변경(db: Session, client: TestClient):
     # given
     """
     @:param: list(루틴아이디, 순서), 유저 아이디
