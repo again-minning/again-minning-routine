@@ -14,7 +14,7 @@ if settings.APP_ENV == 'test':
     }
 
 # echo = show_sql
-engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=True, **kwargs)
+engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=False, **kwargs)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
