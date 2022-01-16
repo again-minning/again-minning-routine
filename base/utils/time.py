@@ -37,6 +37,14 @@ def convert_str2date(date: str):
         return None
 
 
+def convert_str2datetime(date: str):
+    try:
+        date = parse(date)
+        return date
+    except ParserError:
+        return None
+
+
 class DateUtil:
     __MONTH = {
         1: 31,

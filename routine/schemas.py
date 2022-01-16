@@ -5,6 +5,7 @@ from typing import List, Optional
 from pydantic import BaseModel, validator, root_validator
 
 from routine.constants.category import Category
+from routine.constants.result import Result
 from routine.constants.week import Week
 
 
@@ -84,3 +85,9 @@ class Routine(RoutineBase):
 
     class Config:
         orm_mode = True
+
+
+class RoutineResultUpdateRequest(BaseModel):
+    result: Result
+    weekday: Week
+    date: str
