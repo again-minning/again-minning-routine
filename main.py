@@ -5,11 +5,11 @@ from fastapi.responses import JSONResponse
 
 from base.database.connection import CONNECTION
 from retrospect import retrospectRouters
-from routine import routineRouters
+from routine import routine_routers
 connection = CONNECTION
 app = FastAPI()
 
-app.include_router(routineRouters.router)
+app.include_router(routine_routers.router)
 app.include_router(retrospectRouters.router)
 
 
