@@ -13,6 +13,7 @@ from routine.models.routineDay import RoutineDay
 from routine.models.routineResult import RoutineResult
 from test.conftest import complex_transaction
 
+routines_router_url = '/api/v1/routines'
 
 @complex_transaction
 def test_루틴_생성_성공했을_때(db: Session, client: TestClient):
@@ -28,7 +29,7 @@ def test_루틴_생성_성공했을_때(db: Session, client: TestClient):
     }
     # when
     response = client.post(
-        '/api/v1/routine',
+        f'{routines_router_url}',
         json=data
     )
     # then
@@ -54,7 +55,7 @@ def test_루틴_생성이_해당_수행하는_요일과_맞을_때(db: Session, 
     }
     # when
     response = client.post(
-        '/api/v1/routine',
+        f'{routines_router_url}',
         json=data
     )
     assert_that(response.status_code).is_equal_to(200)
@@ -91,7 +92,7 @@ def test_루틴_생성이_해당_수행하는_요일과_맞지_않을때(db: Ses
     }
     # when
     response = client.post(
-        '/api/v1/routine',
+        f'{routines_router_url}',
         json=data
     )
     assert_that(response.status_code).is_equal_to(200)
@@ -114,7 +115,7 @@ def test_루틴_생성_루틴_이름_공백일_때(db: Session, client: TestClie
     }
     # when
     response = client.post(
-        '/api/v1/routine',
+        f'{routines_router_url}',
         json=data
     )
     # then
@@ -127,7 +128,7 @@ def test_루틴_생성_루틴_이름_공백일_때(db: Session, client: TestClie
     error_type = detail['type']
     body = result['body']
     assert_that(method).is_equal_to('POST')
-    assert_that(path).is_equal_to('/api/v1/routine')
+    assert_that(path).is_equal_to(f'{routines_router_url}')
     assert_that(msg).is_equal_to('제목 문구를 적어주세요.')
     assert_that(error_type).is_equal_to('value_error')
     assert_that(body).is_equal_to(data)
@@ -146,7 +147,7 @@ def test_루틴_생성_카테고리_선택하지_않을_때(db: Session, client:
     }
     # when
     response = client.post(
-        '/api/v1/routine',
+        f'{routines_router_url}',
         json=data
     )
     # then
@@ -159,7 +160,7 @@ def test_루틴_생성_카테고리_선택하지_않을_때(db: Session, client:
     error_type = detail['type']
     body = result['body']
     assert_that(method).is_equal_to('POST')
-    assert_that(path).is_equal_to('/api/v1/routine')
+    assert_that(path).is_equal_to(f'{routines_router_url}')
     assert_that(msg).is_equal_to('field required')
     assert_that(error_type).is_equal_to('value_error.missing')
     assert_that(body).is_equal_to(data)
@@ -178,7 +179,7 @@ def test_루틴_생성_요일_값_전달받지_못할_때(db: Session, client: T
     }
     # when
     response = client.post(
-        '/api/v1/routine',
+        f'{routines_router_url}',
         json=data
     )
     # then
@@ -191,7 +192,7 @@ def test_루틴_생성_요일_값_전달받지_못할_때(db: Session, client: T
     error_type = detail['type']
     body = result['body']
     assert_that(method).is_equal_to('POST')
-    assert_that(path).is_equal_to('/api/v1/routine')
+    assert_that(path).is_equal_to(f'{routines_router_url}')
     assert_that(msg).is_equal_to('최소 한 개의 요일을 선택해주세요')
     assert_that(error_type).is_equal_to('value_error')
     assert_that(body).is_equal_to(data)
@@ -210,7 +211,7 @@ def test_루틴_생성_알람보내기값이_null일_때(db: Session, client: Te
     }
     # when
     response = client.post(
-        '/api/v1/routine',
+        f'{routines_router_url}',
         json=data
     )
     # then
@@ -234,14 +235,14 @@ def test_루틴_전체조회(db: Session, client: TestClient):
         'days': ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
     }
     client.post(
-        '/api/v1/routine',
+        f'{routines_router_url}',
         json=data
     )
     account_id = 1
     today = get_now()
     # when
     response = client.get(
-        f'/api/v1/routine/account/{account_id}?today={today.strftime("%Y-%m-%d")}',
+        f'{routines_router_url}/account/{account_id}?today={today.strftime("%Y-%m-%d")}',
     )
     result = response.json()
     message = result['message']
@@ -336,7 +337,7 @@ def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Se
     }
     # when
     response = client.post(
-        '/api/v1/routine',
+        f'{routines_router_url}',
         json=create
     )
     routine = db.query(Routine).first()
@@ -349,8 +350,8 @@ def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Se
         'date': str(date)
     }
     # when
-    response = client.put(
-        f'/api/v1/routine/{routine.id}',
+    response = client.post(
+        f'{routines_router_url}/{routine.id}',
         json=routine_data
     )
     # then
@@ -383,7 +384,7 @@ def test_루틴_결과_체크하는데_Default인_경우(db: Session, client: Te
     }
     # when
     response = client.post(
-        '/api/v1/routine',
+        f'{routines_router_url}',
         json=create
     )
     routine = db.query(Routine).first()
@@ -396,8 +397,8 @@ def test_루틴_결과_체크하는데_Default인_경우(db: Session, client: Te
         'date': str(date)
     }
     # when
-    response = client.put(
-        f'/api/v1/routine/{routine.id}',
+    response = client.post(
+        f'{routines_router_url}/{routine.id}',
         json=routine_data
     )
     # then
