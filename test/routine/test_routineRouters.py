@@ -322,6 +322,9 @@ def test_루틴_값_수정하는데_요일이_아닌_다른_것(db: Session, cli
 @complex_transaction
 def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Session, client: TestClient):
     # given
+    now = get_now()
+    weekday = now.weekday()
+    weekday = Week.get_weekday(weekday)
     create = {
         'title': 'wake_up',
         'account_id': 1,
@@ -342,7 +345,7 @@ def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Se
     date = convert_str2datetime(day)
     routine_data = {
         'result': 'DONE',
-        'weekday': 'MON',
+        'weekday': weekday.value,
         'date': str(date)
     }
     # when
@@ -389,7 +392,7 @@ def test_루틴_결과_체크하는데_Default인_경우(db: Session, client: Te
     date = convert_str2datetime(day)
     routine_data = {
         'result': 'DONE',
-        'weekday': 'MON',
+        'weekday': weekday.value,
         'date': str(date)
     }
     # when
