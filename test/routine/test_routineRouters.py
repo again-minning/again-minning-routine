@@ -1,11 +1,12 @@
 import datetime
 
 from assertpy import assert_that
-from sqlalchemy import desc
+from sqlalchemy import desc, and_
 from sqlalchemy.orm import Session
 from starlette.testclient import TestClient
 
-from base.utils.time import get_now
+from base.utils.time import get_now, convert_str2datetime, convert_str2date
+from routine.constants.result import Result
 from routine.constants.week import Week
 from routine.models.routine import Routine
 from routine.models.routineDay import RoutineDay
@@ -240,7 +241,7 @@ def test_루틴_전체조회(db: Session, client: TestClient):
     today = get_now()
     # when
     response = client.get(
-        f'/api/v1/routine/{account_id}?today={today.strftime("%Y-%m-%d")}',
+        f'/api/v1/routine/account/{account_id}?today={today.strftime("%Y-%m-%d")}',
     )
     result = response.json()
     message = result['message']
@@ -261,6 +262,7 @@ def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_�
     다음 이슈에서 진행해야 할 것 같다. 너무 길어짐 ...
     """
     pass
+
 
 def test_루틴_값_수정하는데_요일일_때(db: Session, client: TestClient):
     # given
@@ -317,40 +319,91 @@ def test_루틴_값_수정하는데_요일이_아닌_다른_것(db: Session, cli
     """
 
 
-def test_루틴_수행여부_값_저장(db: Session, client: TestClient):
+@complex_transaction
+def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Session, client: TestClient):
     # given
-    """
-    루틴 수행 여부 값, 루틴 아이디, 해당 날짜
-    신규 테이블 필요할 듯
-    루틴 수행 여부 저장하는 테이블
-
-    TABLE
-    고유 아이디 | 루틴 아이디 | 해당 수행 요일 | 루틴 수행 여부 | 해당 날짜
-
-    :return:
-    """
+    create = {
+        'title': 'wake_up',
+        'account_id': 1,
+        'category': 1,
+        'goal': 'daily',
+        'is_alarm': True,
+        'start_time': '10:00:00',
+        'days': ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
+    }
     # when
-    """
-    수행 요일인지 확인
-    루틴 수행 여부 저장
-    왜 회고를 통해 확인을 안한 이유?
-    회고를 통해서 완료 여부를 확인을 하지 않고 온전히 루틴을 수행 했는지 안했는지에 대한 값을 저장하는 게 고객의 요구 사항을 처리하는 게 더 용이하다고 판단
-    고객의 요구에 따라 그냥 내가 루틴을 수행 했는지 안 했는지 체크하는 용도로만 사용할 수 있을 것 같음
-    만일 회고의 값을 비교한다고 해도 어려울 것이 없음 그냥 회고의 값을 비교하는 것만 로직에 추가하면 되니까
-    """
+    response = client.post(
+        '/api/v1/routine',
+        json=create
+    )
+    routine = db.query(Routine).first()
+    now = str(get_now())
+    day = str(convert_str2date(now))
+    date = convert_str2datetime(day)
+    routine_data = {
+        'result': 'DONE',
+        'weekday': 'MON',
+        'date': str(date)
+    }
+    # when
+    response = client.put(
+        f'/api/v1/routine/{routine.id}',
+        json=routine_data
+    )
     # then
-    """
-    성공 여부
-    {
-        'message' : {
-            'status' : 'ROUTINE_RESULT_CREATE_OK',
-            'msg': '루틴 결과 생성에 성공하셨습니다.'
-        },
-        'data': {
-            'success': true
-        }
-    }    
-    """
+    result = response.json()
+    message = result['message']
+    data = result['data']
+    assert_that(message['status']).is_equal_to('ROUTINE_OK')
+    assert_that(message['msg']).is_equal_to('루틴 결과 업데이트에 성공했습니다.')
+    assert_that(data['success']).is_true()
+    routine_result = db.query(RoutineResult).filter(and_(RoutineResult.routine_id == routine.id, RoutineResult.yymmdd == date)).first()
+    assert_that(routine_result.result).is_equal_to(Result.DONE)
+
+
+@complex_transaction
+def test_루틴_결과_체크하는데_Default인_경우(db: Session, client: TestClient):
+    # given
+    days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
+    now = get_now()
+    weekday = now.weekday()
+    weekday = Week.get_weekday(weekday)
+    days.remove(weekday)
+    create = {
+        'title': 'wake_up',
+        'account_id': 1,
+        'category': 1,
+        'goal': 'daily',
+        'is_alarm': True,
+        'start_time': '10:00:00',
+        'days': days
+    }
+    # when
+    response = client.post(
+        '/api/v1/routine',
+        json=create
+    )
+    routine = db.query(Routine).first()
+    now = str(get_now())
+    day = str(convert_str2date(now))
+    date = convert_str2datetime(day)
+    routine_data = {
+        'result': 'DONE',
+        'weekday': 'MON',
+        'date': str(date)
+    }
+    # when
+    response = client.put(
+        f'/api/v1/routine/{routine.id}',
+        json=routine_data
+    )
+    # then
+    assert_that(response.status_code).is_equal_to(200)
+    routine_result = db.query(RoutineResult).filter(and_(RoutineResult.routine_id == routine.id, RoutineResult.yymmdd == date)).first()
+    assert_that(routine_result).is_not_none()
+    assert_that(routine_result.result).is_equal_to(Result.DONE)
+    routine_results = db.query(RoutineResult).all()
+    assert_that(len(routine_results)).is_equal_to(2)
 
 
 def test_루틴_수행여부_취소(db: Session, client: TestClient):
