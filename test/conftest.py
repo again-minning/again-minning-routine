@@ -10,7 +10,7 @@ from base.database.database import SessionLocal, get_db
 from main import app
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='function')
 def db() -> Generator:
     db: Session = SessionLocal()
     yield db
@@ -32,7 +32,7 @@ def override_get_db():
 app.dependency_overrides[get_db] = override_get_db
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope='module')
 def client() -> Generator:
     with TestClient(app) as c:
         yield c
@@ -46,5 +46,3 @@ def complex_transaction(func):
         db.commit()
         return ret
     return inner
-
-
