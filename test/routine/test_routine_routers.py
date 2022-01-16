@@ -12,8 +12,10 @@ from routine.models.routine import Routine
 from routine.models.routineDay import RoutineDay
 from routine.models.routineResult import RoutineResult
 from test.conftest import complex_transaction
-
+from routine.constants.routine_message import ROUTINE_CREATE_MESSAGE, ROUTINE_GET_MESSAGE, ROUTINE_UPDATE_MESSAGE, ROUTINE_FIELD_GOAL_ERROR_MESSAGE,\
+    ROUTINE_FIELD_DAYS_ERROR_MESSAGE, ROUTINE_FIELD_START_TIME_ERROR_MESSAGE, ROUTINE_FIELD_TITLE_ERROR_MESSAGE
 routines_router_url = '/api/v1/routines'
+
 
 @complex_transaction
 def test_루틴_생성_성공했을_때(db: Session, client: TestClient):
@@ -37,7 +39,7 @@ def test_루틴_생성_성공했을_때(db: Session, client: TestClient):
     message = result['message']
     body = result['data']
     assert_that(message['status']).is_equal_to('ROUTINE_CREATE_OK')
-    assert_that(message['msg']).is_equal_to('루틴 생성에 성공하셨습니다.')
+    assert_that(message['msg']).is_equal_to(ROUTINE_CREATE_MESSAGE)
     assert_that(body['success']).is_true()
 
 
@@ -129,7 +131,7 @@ def test_루틴_생성_루틴_이름_공백일_때(db: Session, client: TestClie
     body = result['body']
     assert_that(method).is_equal_to('POST')
     assert_that(path).is_equal_to(f'{routines_router_url}')
-    assert_that(msg).is_equal_to('제목 문구를 적어주세요.')
+    assert_that(msg).is_equal_to(ROUTINE_FIELD_TITLE_ERROR_MESSAGE)
     assert_that(error_type).is_equal_to('value_error')
     assert_that(body).is_equal_to(data)
 
@@ -193,7 +195,7 @@ def test_루틴_생성_요일_값_전달받지_못할_때(db: Session, client: T
     body = result['body']
     assert_that(method).is_equal_to('POST')
     assert_that(path).is_equal_to(f'{routines_router_url}')
-    assert_that(msg).is_equal_to('최소 한 개의 요일을 선택해주세요')
+    assert_that(msg).is_equal_to(ROUTINE_FIELD_DAYS_ERROR_MESSAGE)
     assert_that(error_type).is_equal_to('value_error')
     assert_that(body).is_equal_to(data)
 
@@ -219,7 +221,7 @@ def test_루틴_생성_알람보내기값이_null일_때(db: Session, client: Te
     message = result['message']
     body = result['data']
     assert_that(message['status']).is_equal_to('ROUTINE_CREATE_OK')
-    assert_that(message['msg']).is_equal_to('루틴 생성에 성공하셨습니다.')
+    assert_that(message['msg']).is_equal_to(ROUTINE_CREATE_MESSAGE)
     assert_that(body['success']).is_true()
 
 
@@ -249,7 +251,7 @@ def test_루틴_전체조회(db: Session, client: TestClient):
     body = result['data'][0]
     # then
     assert_that(message['status']).is_equal_to('ROUTINE_LIST_OK')
-    assert_that(message['msg']).is_equal_to('루틴 조회에 성공하셨습니다.')
+    assert_that(message['msg']).is_equal_to(ROUTINE_GET_MESSAGE)
     assert_that(body['title']).is_equal_to(data['title'])
     assert_that(body['goal']).is_equal_to(data['goal'])
     assert_that(body['start_time']).is_equal_to(data['start_time'])
@@ -359,7 +361,7 @@ def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Se
     message = result['message']
     data = result['data']
     assert_that(message['status']).is_equal_to('ROUTINE_OK')
-    assert_that(message['msg']).is_equal_to('루틴 결과 업데이트에 성공했습니다.')
+    assert_that(message['msg']).is_equal_to(ROUTINE_UPDATE_MESSAGE)
     assert_that(data['success']).is_true()
     routine_result = db.query(RoutineResult).filter(and_(RoutineResult.routine_id == routine.id, RoutineResult.yymmdd == date)).first()
     assert_that(routine_result.result).is_equal_to(Result.DONE)

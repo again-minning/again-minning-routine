@@ -6,9 +6,9 @@ from sqlalchemy.orm import Session
 from base.database.database import get_db
 from base.utils.constants import HttpStatus
 from base.utils.message import Response, Message
-from routine.repository.routineRepository import create_routine, get_routine_list, update_or_create_routine_result
+from routine.repository.routine_repository import create_routine, get_routine_list, update_or_create_routine_result
 from routine.schemas import RoutineCreateRequest, SimpleSuccessResponse, RoutineElementResponse, RoutineResultUpdateRequest
-
+from routine.constants.routine_message import ROUTINE_CREATE_MESSAGE, ROUTINE_UPDATE_MESSAGE, ROUTINE_GET_MESSAGE
 router = APIRouter(prefix='/api/v1/routines', tags=['routines'])
 
 
@@ -23,7 +23,7 @@ def get_routine_list_router(account_id: int, today: Optional[str], db: Session =
         ) for routine, result in routines
     ]
     response = Response(
-        message=Message(status=HttpStatus.ROUTINE_LIST_OK, msg='루틴 조회에 성공하셨습니다.'),
+        message=Message(status=HttpStatus.ROUTINE_LIST_OK, msg=ROUTINE_GET_MESSAGE),
         data=data
     )
     return response
@@ -33,7 +33,7 @@ def get_routine_list_router(account_id: int, today: Optional[str], db: Session =
 def create_routine_router(routine: RoutineCreateRequest, db: Session = Depends(get_db)):
     success = create_routine(db, routine)
     response = Response[Message, SimpleSuccessResponse](
-        message=Message(status=HttpStatus.ROUTINE_CREATE_OK, msg='루틴 생성에 성공하셨습니다.'),
+        message=Message(status=HttpStatus.ROUTINE_CREATE_OK, msg=ROUTINE_CREATE_MESSAGE),
         data=SimpleSuccessResponse(success=success))
     return response
 
@@ -42,7 +42,7 @@ def create_routine_router(routine: RoutineCreateRequest, db: Session = Depends(g
 def update_routine_result_router(routine_id: int, request: RoutineResultUpdateRequest, db: Session = Depends(get_db)):
     success = update_or_create_routine_result(db=db, routine_id=routine_id, reqeust=request)
     response = Response(
-        message=Message(status=HttpStatus.ROUTINE_OK, msg='루틴 결과 업데이트에 성공했습니다.'),
+        message=Message(status=HttpStatus.ROUTINE_OK, msg=ROUTINE_UPDATE_MESSAGE),
         data=SimpleSuccessResponse(success=success)
     )
     return response
