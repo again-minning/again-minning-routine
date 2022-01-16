@@ -38,7 +38,7 @@ def create_routine_router(routine: RoutineCreateRequest, db: Session = Depends(g
     return response
 
 
-@router.post('/{routine_id}', response_model=Response[Message, SimpleSuccessResponse])
+@router.post('/{routine_id}/check-result', response_model=Response[Message, SimpleSuccessResponse])
 def update_routine_result_router(routine_id: int, request: RoutineResultUpdateRequest, db: Session = Depends(get_db)):
     success = update_or_create_routine_result(db=db, routine_id=routine_id, reqeust=request)
     response = Response(

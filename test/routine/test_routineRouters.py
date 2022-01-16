@@ -351,7 +351,7 @@ def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Se
     }
     # when
     response = client.post(
-        f'{routines_router_url}/{routine.id}',
+        f'{routines_router_url}/{routine.id}/check-result',
         json=routine_data
     )
     # then
@@ -398,7 +398,7 @@ def test_루틴_결과_체크하는데_Default인_경우(db: Session, client: Te
     }
     # when
     response = client.post(
-        f'{routines_router_url}/{routine.id}',
+        f'{routines_router_url}/{routine.id}/check-result',
         json=routine_data
     )
     # then
