@@ -3,10 +3,11 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
-from base.database.connection import CONNECTION
+from base.database.connection import Connection
+from base.utils.constants import ConnectionMode
 from retrospect import retrospectRouters
 from routine import routine_routers
-connection = CONNECTION
+Connection(ddl_mode=ConnectionMode.NONE)
 app = FastAPI()
 
 app.include_router(routine_routers.router)

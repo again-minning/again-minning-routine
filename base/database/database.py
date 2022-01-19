@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from config.settings import settings
 
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
-
+SHOW_SQL = settings.SHOW_SQL
 kwargs = {}
 
 if settings.APP_ENV == 'test':
@@ -14,7 +14,7 @@ if settings.APP_ENV == 'test':
     }
 
 # echo = show_sql
-engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=False, **kwargs)
+engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=SHOW_SQL, **kwargs)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -25,7 +25,6 @@ def get_db():
     session = SessionLocal()
     try:
         yield session
-        session.commit()
     except Exception as e:
         session.rollback()
         raise
