@@ -12,10 +12,6 @@ def get_now() -> datetime.datetime:
     return utc.localize(now).astimezone(KST)
 
 
-def default_date():
-    return datetime.datetime.fromisoformat('1900-01-01')
-
-
 def get_today_end():
     tomorrow = get_now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
     return tomorrow - timedelta(microseconds=1)
@@ -40,6 +36,7 @@ def convert_str2date(date: str):
 def convert_str2datetime(date: str):
     try:
         date = parse(date)
+        date.astimezone(KST)
         return date
     except ParserError:
         return None
