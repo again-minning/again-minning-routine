@@ -8,9 +8,8 @@ from routine.constants.result import Result
 
 class RoutineResult(BaseColumnMixin, TimestampMixin, Base):
 
-    def __init__(self, week_day: int, yymmdd: str, result: Result = Result.NOT, routine_id: int = None):
+    def __init__(self,yymmdd: str, result: Result = Result.NOT, routine_id: int = None):
         self.yymmdd = yymmdd
-        self.week_day = week_day
         self.result = result
         self.routine_id = routine_id
 
@@ -22,8 +21,9 @@ class RoutineResult(BaseColumnMixin, TimestampMixin, Base):
 
     routine = relationship('Routine', back_populates='routine_results')
 
-    week_day = Column(Integer)
-
     result = Column(Enum(Result), default=Result.NOT)
 
-    yymmdd = Column(DateTime(timezone=True))
+    yymmdd = Column(DateTime)
+
+    def update_result(self, result):
+        self.result = result
