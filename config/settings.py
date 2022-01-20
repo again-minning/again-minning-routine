@@ -7,6 +7,7 @@ class DefaultSettings(BaseSettings):
     ENV_STATE: str = 'local'
     APP_ENV: str = 'local'
     DATABASE_URL: str
+    SHOW_SQL: bool = False
 
     class Config:
         env_file = '.env'

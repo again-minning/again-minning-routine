@@ -1,19 +1,21 @@
 import datetime
+from unittest.mock import patch
 
 from assertpy import assert_that
 from sqlalchemy import desc, and_
 from sqlalchemy.orm import Session
 from starlette.testclient import TestClient
 
+from base.utils.constants import HttpStatus
 from base.utils.time import get_now, convert_str2datetime, convert_str2date
 from routine.constants.result import Result
+from routine.constants.routine_message import ROUTINE_CREATE_MESSAGE, ROUTINE_GET_MESSAGE, ROUTINE_RESULTS_UPDATE_MESSAGE, ROUTINE_FIELD_DAYS_ERROR_MESSAGE, ROUTINE_FIELD_TITLE_ERROR_MESSAGE
 from routine.constants.week import Week
 from routine.models.routine import Routine
 from routine.models.routineDay import RoutineDay
 from routine.models.routineResult import RoutineResult
 from test.conftest import complex_transaction
-from routine.constants.routine_message import ROUTINE_CREATE_MESSAGE, ROUTINE_GET_MESSAGE, ROUTINE_UPDATE_MESSAGE, ROUTINE_FIELD_GOAL_ERROR_MESSAGE,\
-    ROUTINE_FIELD_DAYS_ERROR_MESSAGE, ROUTINE_FIELD_START_TIME_ERROR_MESSAGE, ROUTINE_FIELD_TITLE_ERROR_MESSAGE
+
 routines_router_url = '/api/v1/routines'
 
 
@@ -101,7 +103,7 @@ def test_루틴_생성이_해당_수행하는_요일과_맞지_않을때(db: Ses
     routine = db.query(Routine).order_by(desc(Routine.id)).first()
     routine_id = routine.id
     routine_results = db.query(RoutineResult).filter(RoutineResult.routine_id == routine_id).all()
-    assert_that(routine_results[0].result).is_equal_to('DEFAULT')
+    assert_that(len(routine_results)).is_zero()
 
 
 def test_루틴_생성_루틴_이름_공백일_때(db: Session, client: TestClient):
@@ -258,68 +260,132 @@ def test_루틴_전체조회(db: Session, client: TestClient):
     assert_that(body['result']).is_equal_to('NOT')
 
 
+@complex_transaction
 def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_가져오는지(db: Session, client: TestClient):
-    # TODO
-    """
-    현재 잘 안됨
-    다음 이슈에서 진행해야 할 것 같다. 너무 길어짐 ...
-    """
+    now_weekday = datetime.datetime.now().weekday()
+    days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
+    days.remove(Week.get_weekday(now_weekday))
+    data = {
+        'title': 'yes',
+        'account_id': 1,
+        'category': 1,
+        'goal': 'daily',
+        'start_time': '10:00:00',
+        'days': days
+    }
+    client.post(
+        f'{routines_router_url}',
+        json=data
+    )
+    account_id = 1
+    from datetime import timedelta
+    today = get_now()
+    tomorrow = today + timedelta(days=1)
+    # when
+    response = client.get(
+        f'{routines_router_url}/account/{account_id}?today={tomorrow.strftime("%Y-%m-%d")}',
+    )
+    result = response.json()
+    body = result['data'][0]
+    assert_that(body['result']).is_equal_to('NOT')
+    routine_id = body['id']
+    with patch('base.utils.time.get_now') as now:
+        now.return_value = convert_str2datetime(tomorrow.strftime("%Y-%m-%d"))
+        routine_result_data = {
+            'result': 'DONE',
+            'weekday': Week.get_weekday(tomorrow.weekday()),
+            'date': tomorrow.strftime("%Y-%m-%d")
+        }
+        response = client.post(
+            f'{routines_router_url}/{routine_id}/check-result',
+            json=routine_result_data
+        )
+    result = response.json()
+    message = result['message']
+    body = result['data']
+    assert_that(message['status']).is_equal_to(HttpStatus.ROUTINE_OK.value)
+    assert_that(message['msg']).is_equal_to(ROUTINE_RESULTS_UPDATE_MESSAGE)
+    assert_that(body['success']).is_true()
+
+    response = client.get(
+        f'{routines_router_url}/account/{account_id}?today={tomorrow.strftime("%Y-%m-%d")}',
+    )
+    result = response.json()
+    body = result['data'][0]
+    assert_that(body['result']).is_equal_to('DONE')
     pass
 
 
 def test_루틴_값_수정하는데_요일일_때(db: Session, client: TestClient):
     # given
-    """
-    기존 루틴 값 그대로, 루틴 요일 변경
-    :return:
-    """
-    # when
-    """
-    set 자료형을 이용해 차집합 사용
-    기존 - 새로운 : 삭제할 대상
-    새로운 - 기존: 추가될 대상
-    기존 and 새로운 : 보존할 대상
-    보존할 대상만 있는 경우 pass
-    그렇지 않을 경우 수정 작업
-    """
-    # then
-    """
-    merge => 그 이유는 기존 값도 클라에서 제공할 예정이라서
-    {
-        'message' : {
-            'status' : 'ROUTINE_UPDATE_OK',
-            'msg': '루틴 수정에 성공하셨습니다.'
-        },
-        'data': {
-            'success': true
-        }
+    data = {
+        'title': 'yes',
+        'account_id': 1,
+        'category': 1,
+        'goal': 'daily',
+        'start_time': '10:00:00',
+        'days': ['FRI', 'SAT', 'SUN']
     }
-    """
+    client.post(
+        f'{routines_router_url}',
+        json=data
+    )
+    routine = db.query(Routine).filter(and_(Routine.title == data['title'], Routine.account_id == data['account_id'])).first()
+    patch_data = {
+        'title': 'bye',
+        'account_id': 1,
+        'category': 1,
+        'goal': 'say-good-bye',
+        'start_time': '11:00:00',
+        'days': ['MON', 'WED', 'THU']
+    }
+    # when
+    client.patch(
+        f'{routines_router_url}/{routine.id}',
+        json=patch_data
+    )
+    # then
+    days = db.query(RoutineDay.day).filter(RoutineDay.routine_id == routine.id).all()
+    result = []
+    for day in days:
+        result.append(day[0].value)
+    result.sort()
+    assert_that(result).is_equal_to(sorted(patch_data['days']))
 
 
 def test_루틴_값_수정하는데_요일이_아닌_다른_것(db: Session, client: TestClient):
     # given
-    """
-    루틴 생성 값 그대로 받아 들임
-    :return:
-    """
-    # when
-    """
-    그대로 merge 진행
-    """
-    # then
-    """
-    성공 여부 전달
-    {
-        'message' : {
-            'status' : 'ROUTINE_UPDATE_OK',
-            'msg': '루틴 수정에 성공하셨습니다.'
-        },
-        'data': {
-            'success': true
-        }
+    data = {
+        'title': 'yes',
+        'account_id': 1,
+        'category': 1,
+        'goal': 'daily',
+        'start_time': '10:00:00',
+        'days': ['FRI', 'SAT', 'SUN']
     }
-    """
+    client.post(
+        f'{routines_router_url}',
+        json=data
+    )
+    routine: Routine = db.query(Routine).filter(and_(Routine.title == data['title'], Routine.account_id == data['account_id'])).first()
+    patch_data = {
+        'title': 'bye',
+        'account_id': 1,
+        'category': 1,
+        'goal': 'say-good-bye',
+        'start_time': '11:00:00',
+        'days': ['FRI', 'SAT', 'SUN']
+    }
+    # when
+    client.patch(
+        f'{routines_router_url}/{routine.id}',
+        json=patch_data
+    )
+    # then
+    routine: Routine = db.query(Routine).filter(and_(Routine.title == patch_data['title'], Routine.account_id == patch_data['account_id'])).first()
+    assert_that(routine.title).is_equal_to(patch_data['title'])
+    assert_that(routine.goal).is_equal_to(patch_data['goal'])
+    assert_that(str(routine.start_time)).is_equal_to(patch_data['start_time'])
 
 
 @complex_transaction
@@ -349,7 +415,7 @@ def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Se
     routine_data = {
         'result': 'DONE',
         'weekday': weekday.value,
-        'date': str(date)
+        'date': date.strftime("%Y-%m-%d")
     }
     # when
     response = client.post(
@@ -361,7 +427,7 @@ def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Se
     message = result['message']
     data = result['data']
     assert_that(message['status']).is_equal_to('ROUTINE_OK')
-    assert_that(message['msg']).is_equal_to(ROUTINE_UPDATE_MESSAGE)
+    assert_that(message['msg']).is_equal_to(ROUTINE_RESULTS_UPDATE_MESSAGE)
     assert_that(data['success']).is_true()
     routine_result = db.query(RoutineResult).filter(and_(RoutineResult.routine_id == routine.id, RoutineResult.yymmdd == date)).first()
     assert_that(routine_result.result).is_equal_to(Result.DONE)
@@ -396,7 +462,7 @@ def test_루틴_결과_체크하는데_Default인_경우(db: Session, client: Te
     routine_data = {
         'result': 'DONE',
         'weekday': weekday.value,
-        'date': str(date)
+        'date': date.strftime("%Y-%m-%d")
     }
     # when
     response = client.post(
@@ -409,7 +475,41 @@ def test_루틴_결과_체크하는데_Default인_경우(db: Session, client: Te
     assert_that(routine_result).is_not_none()
     assert_that(routine_result.result).is_equal_to(Result.DONE)
     routine_results = db.query(RoutineResult).all()
-    assert_that(len(routine_results)).is_equal_to(2)
+    assert_that(len(routine_results)).is_equal_to(1)
+
+
+@complex_transaction
+def test_루틴_디테일_조회(db: Session, client: TestClient):
+    # given
+    data = {
+        'title': 'time_test',
+        'account_id': 1,
+        'category': 1,
+        'goal': 'daily',
+        'is_alarm': True,
+        'start_time': '10:00:00',
+        'days': ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
+    }
+    # when
+    response = client.post(
+        f'{routines_router_url}',
+        json=data
+    )
+    assert_that(response.status_code).is_equal_to(200)
+    routine: Routine = db.query(Routine).filter(Routine.title == data['title']).first()
+    response = client.get(
+        f'{routines_router_url}/{routine.id}'
+    )
+    result = response.json()
+    message = result['message']
+    body = result['data']
+    assert_that(message['status']).is_equal_to(HttpStatus.ROUTINE_DETAIL_OK.value)
+    assert_that(message['msg']).is_equal_to(ROUTINE_GET_MESSAGE)
+    assert_that(body['id']).is_equal_to(routine.id)
+    assert_that(body['title']).is_equal_to(data['title'])
+    assert_that(body['category']).is_equal_to(data['category'])
+    assert_that(body['goal']).is_equal_to(data['goal'])
+    assert_that(len(body['days'])).is_equal_to(7)
 
 
 def test_루틴_수행여부_취소(db: Session, client: TestClient):
