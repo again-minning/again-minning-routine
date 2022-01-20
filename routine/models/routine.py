@@ -59,6 +59,9 @@ class Routine(BaseColumnMixin, TimestampMixin, Base):
                 retained.add(day.day)
         added = request_days - retained
         self.add_days(added)
+        self.delete_days(db, deleted)
+
+    def delete_days(self, db, deleted):
         for delete_day in deleted:
             db.delete(delete_day)
 
