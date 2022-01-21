@@ -14,6 +14,8 @@ from routine.constants.week import Week
 from routine.models.routine import Routine
 from routine.models.routineDay import RoutineDay
 from routine.models.routineResult import RoutineResult
+from routine.repository.routine_repository import patch_routine_detail
+from routine.schemas import RoutineCreateRequest
 from test.conftest import complex_transaction
 
 routines_router_url = '/api/v1/routines'
@@ -353,6 +355,7 @@ def test_루틴_값_수정하는데_요일일_때(db: Session, client: TestClien
     assert_that(result).is_equal_to(sorted(patch_data['days']))
 
 
+@complex_transaction
 def test_루틴_값_수정하는데_요일이_아닌_다른_것(db: Session, client: TestClient):
     # given
     data = {
@@ -368,24 +371,22 @@ def test_루틴_값_수정하는데_요일이_아닌_다른_것(db: Session, cli
         json=data
     )
     routine: Routine = db.query(Routine).filter(and_(Routine.title == data['title'], Routine.account_id == data['account_id'])).first()
-    patch_data = {
-        'title': 'bye',
-        'account_id': 1,
-        'category': 1,
-        'goal': 'say-good-bye',
-        'start_time': '11:00:00',
-        'days': ['FRI', 'SAT', 'SUN']
-    }
-    # when
-    client.patch(
-        f'{routines_router_url}/{routine.id}',
-        json=patch_data
+    patch_data = RoutineCreateRequest(
+        title='bye', account_id=1,
+        category=1, goal='say-good-bye',
+        start_time='11:00:00', days=['FRI', 'SAT', 'SUN']
     )
+    # when
+    patch_routine_detail(db=db, routine_id=routine.id, request=patch_data)
     # then
-    routine: Routine = db.query(Routine).filter(and_(Routine.title == patch_data['title'], Routine.account_id == patch_data['account_id'])).first()
-    assert_that(routine.title).is_equal_to(patch_data['title'])
-    assert_that(routine.goal).is_equal_to(patch_data['goal'])
-    assert_that(str(routine.start_time)).is_equal_to(patch_data['start_time'])
+    response = client.get(
+        f'{routines_router_url}/{routine.id}'
+    )
+    result = response.json()
+    result_data = result['data']
+    assert_that(result_data['title']).is_equal_to(patch_data.title)
+    assert_that(result_data['goal']).is_equal_to(patch_data.goal)
+    assert_that(str(result_data['start_time'])).is_equal_to(patch_data.start_time)
 
 
 @complex_transaction
@@ -404,7 +405,7 @@ def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Se
         'days': ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
     }
     # when
-    response = client.post(
+    client.post(
         f'{routines_router_url}',
         json=create
     )
@@ -451,7 +452,7 @@ def test_루틴_결과_체크하는데_Default인_경우(db: Session, client: Te
         'days': days
     }
     # when
-    response = client.post(
+    client.post(
         f'{routines_router_url}',
         json=create
     )

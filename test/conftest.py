@@ -22,7 +22,6 @@ def override_get_db():
     db: Session = SessionLocal()
     try:
         yield db
-        db.commit()
     except HTTPException as e:
         db.rollback()
     finally:
@@ -40,9 +39,12 @@ def client() -> Generator:
 
 def complex_transaction(func):
     def inner(db: Session, client: TestClient):
-        ret = func(db, client)
-        for model in models:
-            db.query(model).delete()
-        db.commit()
+        try:
+            print('--transaction--')
+            ret = func(db, client)
+        finally:
+            for model in models:
+                db.query(model).delete()
+            db.commit()
         return ret
     return inner
