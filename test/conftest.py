@@ -37,10 +37,9 @@ def client() -> Generator:
         yield c
 
 
-def complex_transaction(func):
+def maintain_idempotent(func):
     def inner(db: Session, client: TestClient):
         try:
-            print('--transaction--')
             ret = func(db, client)
         finally:
             for model in models:

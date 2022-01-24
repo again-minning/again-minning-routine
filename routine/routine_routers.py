@@ -1,6 +1,6 @@
 from typing import Optional, List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
 from base.database.database import get_db
@@ -13,9 +13,9 @@ from routine.schemas import RoutineCreateRequest, SimpleSuccessResponse, Routine
 router = APIRouter(prefix='/api/v1/routines', tags=['routines'])
 
 
-@router.get('/account/{account_id}', response_model=Response[Message, Optional[List[RoutineElementResponse]]])
-def get_routine_list_router(account_id: int, today: Optional[str], db: Session = Depends(get_db)):
-    routines = get_routine_list(db, account_id, today)
+@router.get('/account', response_model=Response[Message, Optional[List[RoutineElementResponse]]])
+def get_routine_list_router(today: Optional[str], db: Session = Depends(get_db), account: Optional[str] = Header(None)):
+    routines = get_routine_list(db, account, today)
     response = Response(
         message=Message(status=HttpStatus.ROUTINE_LIST_OK, msg=ROUTINE_GET_MESSAGE),
         data=RoutineElementResponse.to_list_response(routines=routines)
@@ -24,8 +24,9 @@ def get_routine_list_router(account_id: int, today: Optional[str], db: Session =
 
 
 @router.post('', response_model=Response[Message, SimpleSuccessResponse])
-def create_routine_router(routine: RoutineCreateRequest, db: Session = Depends(get_db)):
-    success = create_routine(db, routine)
+def create_routine_router(routine: RoutineCreateRequest, db: Session = Depends(get_db), account: Optional[str] = Header(None)):
+    print(account)
+    success = create_routine(db, routine, account)
     response = Response[Message, SimpleSuccessResponse](
         message=Message(status=HttpStatus.ROUTINE_CREATE_OK, msg=ROUTINE_CREATE_MESSAGE),
         data=SimpleSuccessResponse(success=success))
@@ -53,8 +54,8 @@ def get_routine_detail_router(routine_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch('/{routine_id}', response_model=Response[Message, SimpleSuccessResponse])
-def patch_routine_detail_router(routine_id: int, request: RoutineCreateRequest, db: Session = Depends(get_db)):
-    success = patch_routine_detail(db=db, routine_id=routine_id, request=request)
+def patch_routine_detail_router(routine_id: int, request: RoutineCreateRequest, db: Session = Depends(get_db), account: Optional[str] = Header(None)):
+    success = patch_routine_detail(db=db, routine_id=routine_id, request=request, account=account)
     response = Response[Message, SimpleSuccessResponse](
         message=Message(status=HttpStatus.ROUTINE_PATCH_OK, msg=ROUTINE_UPDATE_MESSAGE),
         data=SimpleSuccessResponse(success=success)

@@ -9,7 +9,7 @@ from routine.models.routineResult import RoutineResult
 from routine.schemas import RoutineCreateRequest, RoutineResultUpdateRequest
 
 
-def get_routine_list(db: Session, account_id: int, today: str):
+def get_routine_list(db: Session, account_id: str, today: str):
     fields = ['id', 'title', 'goal', 'start_time']
 
     today = convert_str2datetime(today)
@@ -37,14 +37,14 @@ def get_routine_list(db: Session, account_id: int, today: str):
     return response
 
 
-def create_routine(db: Session, routine: RoutineCreateRequest):
+def create_routine(db: Session, routine: RoutineCreateRequest, account: str):
     days = routine.dict().pop('days')
     start_time = routine.start_time
     start_time = convert_str2time(start_time)
 
     db_routine = Routine(
         title=routine.title, category=routine.category,
-        goal=routine.goal, start_time=start_time, account_id=routine.account_id, is_alarm=routine.is_alarm
+        goal=routine.goal, start_time=start_time, account_id=account, is_alarm=routine.is_alarm
     )
 
     db_routine.init_days(days)
@@ -77,8 +77,8 @@ def get_routine_detail(db: Session, routine_id: int):
     ).options(subqueryload('days').load_only('day'), load_only(*fields)).first()
 
 
-def patch_routine_detail(db: Session, request: RoutineCreateRequest, routine_id: int):
-    routine: Routine = db.query(Routine).filter(Routine.id == routine_id).first()
+def patch_routine_detail(db: Session, request: RoutineCreateRequest, routine_id: int, account: str):
+    routine: Routine = db.query(Routine).filter(and_(Routine.id == routine_id, Routine.account_id == account)).first()
     routine.update_routine(request)
     request_days = set(request.days)
     routine.patch_days(db=db, request_days=request_days)

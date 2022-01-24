@@ -16,17 +16,16 @@ from routine.models.routineDay import RoutineDay
 from routine.models.routineResult import RoutineResult
 from routine.repository.routine_repository import patch_routine_detail
 from routine.schemas import RoutineCreateRequest
-from test.conftest import complex_transaction
+from test.conftest import maintain_idempotent
 
 routines_router_url = '/api/v1/routines'
 
 
-@complex_transaction
+@maintain_idempotent
 def test_루틴_생성_성공했을_때(db: Session, client: TestClient):
     # given
     data = {
         'title': 'wake_up',
-        'account_id': 1,
         'category': 1,
         'goal': 'daily',
         'is_alarm': True,
@@ -36,7 +35,8 @@ def test_루틴_생성_성공했을_때(db: Session, client: TestClient):
     # when
     response = client.post(
         f'{routines_router_url}',
-        json=data
+        json=data,
+        headers={'account': '1'}
     )
     # then
     result = response.json()
@@ -47,12 +47,11 @@ def test_루틴_생성_성공했을_때(db: Session, client: TestClient):
     assert_that(body['success']).is_true()
 
 
-@complex_transaction
+@maintain_idempotent
 def test_루틴_생성이_해당_수행하는_요일과_맞을_때(db: Session, client: TestClient):
     # given
     data = {
         'title': 'time_test',
-        'account_id': 1,
         'category': 1,
         'goal': 'daily',
         'is_alarm': True,
@@ -62,7 +61,8 @@ def test_루틴_생성이_해당_수행하는_요일과_맞을_때(db: Session, 
     # when
     response = client.post(
         f'{routines_router_url}',
-        json=data
+        json=data,
+        headers={'account': '1'}
     )
     assert_that(response.status_code).is_equal_to(200)
     # select routine
@@ -71,7 +71,7 @@ def test_루틴_생성이_해당_수행하는_요일과_맞을_때(db: Session, 
     assert_that(routine.title).is_equal_to(data['title'])
     assert_that(routine.category.value).is_equal_to(data['category'])
     assert_that(routine.goal).is_equal_to(data['goal'])
-    assert_that(routine.account_id).is_equal_to(data['account_id'])
+    assert_that(routine.account_id).is_equal_to(1)
     assert_that(routine.is_alarm).is_true()
     # select routine_day
     routine_day = db.query(RoutineDay).filter(RoutineDay.routine_id == routine_id).all()
@@ -81,7 +81,7 @@ def test_루틴_생성이_해당_수행하는_요일과_맞을_때(db: Session, 
     assert_that(routine_results[0].result).is_equal_to('NOT')
 
 
-@complex_transaction
+@maintain_idempotent
 def test_루틴_생성이_해당_수행하는_요일과_맞지_않을때(db: Session, client: TestClient):
     now_weekday = datetime.datetime.now().weekday()
     days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
@@ -89,7 +89,6 @@ def test_루틴_생성이_해당_수행하는_요일과_맞지_않을때(db: Ses
     # given
     data = {
         'title': 'time_test',
-        'account_id': 1,
         'category': 1,
         'goal': 'daily',
         'is_alarm': True,
@@ -99,7 +98,8 @@ def test_루틴_생성이_해당_수행하는_요일과_맞지_않을때(db: Ses
     # when
     response = client.post(
         f'{routines_router_url}',
-        json=data
+        json=data,
+        headers={'account': '1'}
     )
     assert_that(response.status_code).is_equal_to(200)
     routine = db.query(Routine).order_by(desc(Routine.id)).first()
@@ -112,7 +112,6 @@ def test_루틴_생성_루틴_이름_공백일_때(db: Session, client: TestClie
     # given
     data = {
         'title': '',
-        'account_id': 1,
         'category': 1,
         'goal': 'daily',
         'is_alarm': True,
@@ -122,7 +121,8 @@ def test_루틴_생성_루틴_이름_공백일_때(db: Session, client: TestClie
     # when
     response = client.post(
         f'{routines_router_url}',
-        json=data
+        json=data,
+        headers={'account': '1'}
     )
     # then
     result = response.json()
@@ -140,12 +140,11 @@ def test_루틴_생성_루틴_이름_공백일_때(db: Session, client: TestClie
     assert_that(body).is_equal_to(data)
 
 
-@complex_transaction
+@maintain_idempotent
 def test_루틴_생성_카테고리_선택하지_않을_때(db: Session, client: TestClient):
     # given
     data = {
         'title': 'wake_up',
-        'account_id': 1,
         'goal': 'daily',
         'is_alarm': True,
         'start_time': '10:00:00',
@@ -154,7 +153,8 @@ def test_루틴_생성_카테고리_선택하지_않을_때(db: Session, client:
     # when
     response = client.post(
         f'{routines_router_url}',
-        json=data
+        json=data,
+        headers={'account': '1'}
     )
     # then
     result = response.json()
@@ -172,12 +172,11 @@ def test_루틴_생성_카테고리_선택하지_않을_때(db: Session, client:
     assert_that(body).is_equal_to(data)
 
 
-@complex_transaction
+@maintain_idempotent
 def test_루틴_생성_요일_값_전달받지_못할_때(db: Session, client: TestClient):
     # given
     data = {
         'title': 'wake_up',
-        'account_id': 1,
         'category': 1,
         'goal': 'daily',
         'is_alarm': True,
@@ -186,7 +185,8 @@ def test_루틴_생성_요일_값_전달받지_못할_때(db: Session, client: T
     # when
     response = client.post(
         f'{routines_router_url}',
-        json=data
+        json=data,
+        headers={'account': '1'}
     )
     # then
     result = response.json()
@@ -204,12 +204,11 @@ def test_루틴_생성_요일_값_전달받지_못할_때(db: Session, client: T
     assert_that(body).is_equal_to(data)
 
 
-@complex_transaction
+@maintain_idempotent
 def test_루틴_생성_알람보내기값이_null일_때(db: Session, client: TestClient):
     # given
     data = {
         'title': 'is_alarm',
-        'account_id': 1,
         'category': 1,
         'goal': 'daily',
         'start_time': '10:00:00',
@@ -218,7 +217,8 @@ def test_루틴_생성_알람보내기값이_null일_때(db: Session, client: Te
     # when
     response = client.post(
         f'{routines_router_url}',
-        json=data
+        json=data,
+        headers={'account': '1'}
     )
     # then
     result = response.json()
@@ -229,12 +229,11 @@ def test_루틴_생성_알람보내기값이_null일_때(db: Session, client: Te
     assert_that(body['success']).is_true()
 
 
-@complex_transaction
+@maintain_idempotent
 def test_루틴_전체조회(db: Session, client: TestClient):
     # given
     data = {
         'title': 'yes',
-        'account_id': 1,
         'category': 1,
         'goal': 'daily',
         'start_time': '10:00:00',
@@ -242,13 +241,15 @@ def test_루틴_전체조회(db: Session, client: TestClient):
     }
     client.post(
         f'{routines_router_url}',
-        json=data
+        json=data,
+        headers={'account': '1'}
     )
     account_id = 1
     today = get_now()
     # when
     response = client.get(
-        f'{routines_router_url}/account/{account_id}?today={today.strftime("%Y-%m-%d")}',
+        f'{routines_router_url}/account?today={today.strftime("%Y-%m-%d")}',
+        headers={'account': '1'}
     )
     result = response.json()
     message = result['message']
@@ -262,14 +263,13 @@ def test_루틴_전체조회(db: Session, client: TestClient):
     assert_that(body['result']).is_equal_to('NOT')
 
 
-@complex_transaction
+@maintain_idempotent
 def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_가져오는지(db: Session, client: TestClient):
     now_weekday = datetime.datetime.now().weekday()
     days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
     days.remove(Week.get_weekday(now_weekday))
     data = {
         'title': 'yes',
-        'account_id': 1,
         'category': 1,
         'goal': 'daily',
         'start_time': '10:00:00',
@@ -277,7 +277,8 @@ def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_�
     }
     client.post(
         f'{routines_router_url}',
-        json=data
+        json=data,
+        headers={'account': '1'}
     )
     account_id = 1
     from datetime import timedelta
@@ -285,7 +286,8 @@ def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_�
     tomorrow = today + timedelta(days=1)
     # when
     response = client.get(
-        f'{routines_router_url}/account/{account_id}?today={tomorrow.strftime("%Y-%m-%d")}',
+        f'{routines_router_url}/account?today={tomorrow.strftime("%Y-%m-%d")}',
+        headers={'account': '1'}
     )
     result = response.json()
     body = result['data'][0]
@@ -310,19 +312,18 @@ def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_�
     assert_that(body['success']).is_true()
 
     response = client.get(
-        f'{routines_router_url}/account/{account_id}?today={tomorrow.strftime("%Y-%m-%d")}',
+        f'{routines_router_url}/account?today={tomorrow.strftime("%Y-%m-%d")}',
+        headers={'account': '1'}
     )
     result = response.json()
     body = result['data'][0]
     assert_that(body['result']).is_equal_to('DONE')
-    pass
 
 
 def test_루틴_값_수정하는데_요일일_때(db: Session, client: TestClient):
     # given
     data = {
         'title': 'yes',
-        'account_id': 1,
         'category': 1,
         'goal': 'daily',
         'start_time': '10:00:00',
@@ -330,12 +331,12 @@ def test_루틴_값_수정하는데_요일일_때(db: Session, client: TestClien
     }
     client.post(
         f'{routines_router_url}',
-        json=data
+        json=data,
+        headers={'account': '1'}
     )
-    routine = db.query(Routine).filter(and_(Routine.title == data['title'], Routine.account_id == data['account_id'])).first()
+    routine = db.query(Routine).filter(and_(Routine.title == data['title'], Routine.account_id == 1)).first()
     patch_data = {
         'title': 'bye',
-        'account_id': 1,
         'category': 1,
         'goal': 'say-good-bye',
         'start_time': '11:00:00',
@@ -344,7 +345,8 @@ def test_루틴_값_수정하는데_요일일_때(db: Session, client: TestClien
     # when
     client.patch(
         f'{routines_router_url}/{routine.id}',
-        json=patch_data
+        json=patch_data,
+        headers={'account': '1'}
     )
     # then
     days = db.query(RoutineDay.day).filter(RoutineDay.routine_id == routine.id).all()
@@ -355,12 +357,11 @@ def test_루틴_값_수정하는데_요일일_때(db: Session, client: TestClien
     assert_that(result).is_equal_to(sorted(patch_data['days']))
 
 
-@complex_transaction
+@maintain_idempotent
 def test_루틴_값_수정하는데_요일이_아닌_다른_것(db: Session, client: TestClient):
     # given
     data = {
         'title': 'yes',
-        'account_id': 1,
         'category': 1,
         'goal': 'daily',
         'start_time': '10:00:00',
@@ -368,16 +369,17 @@ def test_루틴_값_수정하는데_요일이_아닌_다른_것(db: Session, cli
     }
     client.post(
         f'{routines_router_url}',
-        json=data
+        json=data,
+        headers={'account': '1'}
     )
-    routine: Routine = db.query(Routine).filter(and_(Routine.title == data['title'], Routine.account_id == data['account_id'])).first()
+    routine: Routine = db.query(Routine).filter(and_(Routine.title == data['title'], Routine.account_id == 1)).first()
     patch_data = RoutineCreateRequest(
-        title='bye', account_id=1,
+        title='bye',
         category=1, goal='say-good-bye',
         start_time='11:00:00', days=['FRI', 'SAT', 'SUN']
     )
     # when
-    patch_routine_detail(db=db, routine_id=routine.id, request=patch_data)
+    patch_routine_detail(db=db, routine_id=routine.id, request=patch_data, account='1')
     # then
     response = client.get(
         f'{routines_router_url}/{routine.id}'
@@ -389,7 +391,7 @@ def test_루틴_값_수정하는데_요일이_아닌_다른_것(db: Session, cli
     assert_that(str(result_data['start_time'])).is_equal_to(patch_data.start_time)
 
 
-@complex_transaction
+@maintain_idempotent
 def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Session, client: TestClient):
     # given
     now = get_now()
@@ -397,7 +399,6 @@ def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Se
     weekday = Week.get_weekday(weekday)
     create = {
         'title': 'wake_up',
-        'account_id': 1,
         'category': 1,
         'goal': 'daily',
         'is_alarm': True,
@@ -407,7 +408,8 @@ def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Se
     # when
     client.post(
         f'{routines_router_url}',
-        json=create
+        json=create,
+        headers={'account': '1'}
     )
     routine = db.query(Routine).first()
     now = str(get_now())
@@ -434,7 +436,7 @@ def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Se
     assert_that(routine_result.result).is_equal_to(Result.DONE)
 
 
-@complex_transaction
+@maintain_idempotent
 def test_루틴_결과_체크하는데_Default인_경우(db: Session, client: TestClient):
     # given
     days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
@@ -444,7 +446,6 @@ def test_루틴_결과_체크하는데_Default인_경우(db: Session, client: Te
     days.remove(weekday)
     create = {
         'title': 'wake_up',
-        'account_id': 1,
         'category': 1,
         'goal': 'daily',
         'is_alarm': True,
@@ -454,7 +455,8 @@ def test_루틴_결과_체크하는데_Default인_경우(db: Session, client: Te
     # when
     client.post(
         f'{routines_router_url}',
-        json=create
+        json=create,
+        headers={'account': '1'}
     )
     routine = db.query(Routine).first()
     now = str(get_now())
@@ -479,12 +481,11 @@ def test_루틴_결과_체크하는데_Default인_경우(db: Session, client: Te
     assert_that(len(routine_results)).is_equal_to(1)
 
 
-@complex_transaction
+@maintain_idempotent
 def test_루틴_디테일_조회(db: Session, client: TestClient):
     # given
     data = {
         'title': 'time_test',
-        'account_id': 1,
         'category': 1,
         'goal': 'daily',
         'is_alarm': True,
@@ -494,7 +495,8 @@ def test_루틴_디테일_조회(db: Session, client: TestClient):
     # when
     response = client.post(
         f'{routines_router_url}',
-        json=data
+        json=data,
+        headers={'account': '1'}
     )
     assert_that(response.status_code).is_equal_to(200)
     routine: Routine = db.query(Routine).filter(Routine.title == data['title']).first()
