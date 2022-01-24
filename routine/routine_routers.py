@@ -13,9 +13,9 @@ from routine.schemas import RoutineCreateRequest, SimpleSuccessResponse, Routine
 router = APIRouter(prefix='/api/v1/routines', tags=['routines'])
 
 
-@router.get('/account/{account_id}', response_model=Response[Message, Optional[List[RoutineElementResponse]]])
-def get_routine_list_router(account_id: int, today: Optional[str], db: Session = Depends(get_db)):
-    routines = get_routine_list(db, account_id, today)
+@router.get('/account', response_model=Response[Message, Optional[List[RoutineElementResponse]]])
+def get_routine_list_router(today: Optional[str], db: Session = Depends(get_db), account: Optional[str] = Header(None)):
+    routines = get_routine_list(db, account, today)
     response = Response(
         message=Message(status=HttpStatus.ROUTINE_LIST_OK, msg=ROUTINE_GET_MESSAGE),
         data=RoutineElementResponse.to_list_response(routines=routines)

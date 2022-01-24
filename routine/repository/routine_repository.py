@@ -9,7 +9,7 @@ from routine.models.routineResult import RoutineResult
 from routine.schemas import RoutineCreateRequest, RoutineResultUpdateRequest
 
 
-def get_routine_list(db: Session, account_id: int, today: str):
+def get_routine_list(db: Session, account_id: str, today: str):
     fields = ['id', 'title', 'goal', 'start_time']
 
     today = convert_str2datetime(today)

@@ -16,12 +16,12 @@ from routine.models.routineDay import RoutineDay
 from routine.models.routineResult import RoutineResult
 from routine.repository.routine_repository import patch_routine_detail
 from routine.schemas import RoutineCreateRequest
-from test.conftest import test_idempotent
+from test.conftest import maintain_idempotent
 
 routines_router_url = '/api/v1/routines'
 
 
-@test_idempotent
+@maintain_idempotent
 def test_루틴_생성_성공했을_때(db: Session, client: TestClient):
     # given
     data = {
@@ -47,7 +47,7 @@ def test_루틴_생성_성공했을_때(db: Session, client: TestClient):
     assert_that(body['success']).is_true()
 
 
-@test_idempotent
+@maintain_idempotent
 def test_루틴_생성이_해당_수행하는_요일과_맞을_때(db: Session, client: TestClient):
     # given
     data = {
@@ -81,7 +81,7 @@ def test_루틴_생성이_해당_수행하는_요일과_맞을_때(db: Session, 
     assert_that(routine_results[0].result).is_equal_to('NOT')
 
 
-@test_idempotent
+@maintain_idempotent
 def test_루틴_생성이_해당_수행하는_요일과_맞지_않을때(db: Session, client: TestClient):
     now_weekday = datetime.datetime.now().weekday()
     days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
@@ -140,7 +140,7 @@ def test_루틴_생성_루틴_이름_공백일_때(db: Session, client: TestClie
     assert_that(body).is_equal_to(data)
 
 
-@test_idempotent
+@maintain_idempotent
 def test_루틴_생성_카테고리_선택하지_않을_때(db: Session, client: TestClient):
     # given
     data = {
@@ -172,7 +172,7 @@ def test_루틴_생성_카테고리_선택하지_않을_때(db: Session, client:
     assert_that(body).is_equal_to(data)
 
 
-@test_idempotent
+@maintain_idempotent
 def test_루틴_생성_요일_값_전달받지_못할_때(db: Session, client: TestClient):
     # given
     data = {
@@ -204,7 +204,7 @@ def test_루틴_생성_요일_값_전달받지_못할_때(db: Session, client: T
     assert_that(body).is_equal_to(data)
 
 
-@test_idempotent
+@maintain_idempotent
 def test_루틴_생성_알람보내기값이_null일_때(db: Session, client: TestClient):
     # given
     data = {
@@ -229,7 +229,7 @@ def test_루틴_생성_알람보내기값이_null일_때(db: Session, client: Te
     assert_that(body['success']).is_true()
 
 
-@test_idempotent
+@maintain_idempotent
 def test_루틴_전체조회(db: Session, client: TestClient):
     # given
     data = {
@@ -248,7 +248,8 @@ def test_루틴_전체조회(db: Session, client: TestClient):
     today = get_now()
     # when
     response = client.get(
-        f'{routines_router_url}/account/{account_id}?today={today.strftime("%Y-%m-%d")}',
+        f'{routines_router_url}/account?today={today.strftime("%Y-%m-%d")}',
+        headers={'account': '1'}
     )
     result = response.json()
     message = result['message']
@@ -262,7 +263,7 @@ def test_루틴_전체조회(db: Session, client: TestClient):
     assert_that(body['result']).is_equal_to('NOT')
 
 
-@test_idempotent
+@maintain_idempotent
 def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_가져오는지(db: Session, client: TestClient):
     now_weekday = datetime.datetime.now().weekday()
     days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
@@ -285,7 +286,8 @@ def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_�
     tomorrow = today + timedelta(days=1)
     # when
     response = client.get(
-        f'{routines_router_url}/account/{account_id}?today={tomorrow.strftime("%Y-%m-%d")}',
+        f'{routines_router_url}/account?today={tomorrow.strftime("%Y-%m-%d")}',
+        headers={'account': '1'}
     )
     result = response.json()
     body = result['data'][0]
@@ -310,12 +312,12 @@ def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_�
     assert_that(body['success']).is_true()
 
     response = client.get(
-        f'{routines_router_url}/account/{account_id}?today={tomorrow.strftime("%Y-%m-%d")}',
+        f'{routines_router_url}/account?today={tomorrow.strftime("%Y-%m-%d")}',
+        headers={'account': '1'}
     )
     result = response.json()
     body = result['data'][0]
     assert_that(body['result']).is_equal_to('DONE')
-    pass
 
 
 def test_루틴_값_수정하는데_요일일_때(db: Session, client: TestClient):
@@ -355,7 +357,7 @@ def test_루틴_값_수정하는데_요일일_때(db: Session, client: TestClien
     assert_that(result).is_equal_to(sorted(patch_data['days']))
 
 
-@test_idempotent
+@maintain_idempotent
 def test_루틴_값_수정하는데_요일이_아닌_다른_것(db: Session, client: TestClient):
     # given
     data = {
@@ -389,7 +391,7 @@ def test_루틴_값_수정하는데_요일이_아닌_다른_것(db: Session, cli
     assert_that(str(result_data['start_time'])).is_equal_to(patch_data.start_time)
 
 
-@test_idempotent
+@maintain_idempotent
 def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Session, client: TestClient):
     # given
     now = get_now()
@@ -434,7 +436,7 @@ def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Se
     assert_that(routine_result.result).is_equal_to(Result.DONE)
 
 
-@test_idempotent
+@maintain_idempotent
 def test_루틴_결과_체크하는데_Default인_경우(db: Session, client: TestClient):
     # given
     days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
@@ -479,7 +481,7 @@ def test_루틴_결과_체크하는데_Default인_경우(db: Session, client: Te
     assert_that(len(routine_results)).is_equal_to(1)
 
 
-@test_idempotent
+@maintain_idempotent
 def test_루틴_디테일_조회(db: Session, client: TestClient):
     # given
     data = {
