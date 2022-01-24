@@ -1,5 +1,4 @@
 import re
-from datetime import datetime
 from typing import List, Optional
 
 from pydantic import BaseModel, validator, root_validator
@@ -11,17 +10,9 @@ from routine.constants.routine_message import \
 from routine.constants.week import Week
 
 
-class SimpleSuccessResponse(BaseModel):
-    success: bool
-
-
 class RoutineCoreBase(BaseModel):
     title: str
     category: Category
-
-
-class RecommendedRoutineResponse(RoutineCoreBase):
-    description: str
 
 
 class RoutineBase(RoutineCoreBase):
@@ -43,7 +34,6 @@ class RoutineBase(RoutineCoreBase):
 
 
 class RoutineCreateRequest(RoutineBase):
-    account_id: int
     is_alarm: Optional[bool] = False
 
     @root_validator
@@ -60,6 +50,11 @@ class RoutineCreateRequest(RoutineBase):
         if valid is None:
             raise ValueError(ROUTINE_FIELD_START_TIME_ERROR_MESSAGE)
         return request
+
+
+class RoutineCreateResponse(BaseModel):
+    routine_id: int
+    success: bool
 
 
 class RoutineElementResponse(BaseModel):
@@ -79,25 +74,6 @@ class RoutineElementResponse(BaseModel):
             ) for routine, result in routines
         ]
         return data
-
-
-class RoutineCommonResponse(RoutineBase):
-    pass
-
-
-class RoutineCreateResponse(BaseModel):
-    routine_id: int
-    success: bool
-
-
-class Routine(RoutineBase):
-    routine_id: int
-    account_id: int
-    is_delete: bool
-    created_at: datetime
-
-    class Config:
-        orm_mode = True
 
 
 class RoutineResultUpdateRequest(BaseModel):
@@ -134,3 +110,7 @@ class RoutineDetailResponse(BaseModel):
             goal=result.goal, is_alarm=result.is_alarm, days=[RoutineDaysResponse(day=days.day, routine_id=days.routine_id) for days in result.days]
         )
         return res
+
+
+class SimpleSuccessResponse(BaseModel):
+    success: bool
