@@ -37,7 +37,7 @@ def client() -> Generator:
         yield c
 
 
-def test_idempotent(func):
+def maintain_idempotent(func):
     def inner(db: Session, client: TestClient):
         try:
             ret = func(db, client)
