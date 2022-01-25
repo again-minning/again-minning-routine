@@ -23,18 +23,7 @@ def get_routine_list(db: Session, account_id: str, today: str):
             RoutineDay.day == weekday
         )
     ).options(load_only(*fields), joinedload(Routine.routine_results)).all()
-
-    response = []
-    for routine in routines:
-        results = routine.routine_results
-        for result in results:
-            if result.yymmdd == today:
-                value = result.result
-                break
-        else:
-            value = 'NOT'
-        response.append((routine, value))
-    return response
+    return routines, today
 
 
 def create_routine(db: Session, routine: RoutineCreateRequest, account: str):

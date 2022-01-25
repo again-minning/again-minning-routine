@@ -65,15 +65,31 @@ class RoutineElementResponse(BaseModel):
     result: str
 
     @classmethod
-    def to_list_response(cls, routines):
+    def to_list_response(cls, values):
+        routines, today = values
+        response = cls.__extract_routine_list_dto(routines, today)
         data = [
             RoutineElementResponse(
                 title=routine.title, id=routine.id,
                 goal=routine.goal, start_time=str(routine.start_time),
                 result=result.upper()
-            ) for routine, result in routines
+            ) for routine, result in response
         ]
         return data
+
+    @classmethod
+    def __extract_routine_list_dto(cls, routines, today):
+        response = []
+        for routine in routines:
+            results = routine.routine_results
+            for result in results:
+                if result.yymmdd == today:
+                    value = result.result
+                    break
+            else:
+                value = 'NOT'
+            response.append((routine, value))
+        return response
 
 
 class RoutineResultUpdateRequest(BaseModel):

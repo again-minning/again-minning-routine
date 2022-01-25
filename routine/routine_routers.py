@@ -15,17 +15,16 @@ router = APIRouter(prefix='/api/v1/routines', tags=['routines'])
 
 @router.get('/account', response_model=Response[Message, Optional[List[RoutineElementResponse]]])
 def get_routine_list_router(today: Optional[str], db: Session = Depends(get_db), account: Optional[str] = Header(None)):
-    routines = get_routine_list(db, account, today)
+    results = get_routine_list(db, account, today)
     response = Response(
         message=Message(status=HttpStatus.ROUTINE_LIST_OK, msg=ROUTINE_GET_MESSAGE),
-        data=RoutineElementResponse.to_list_response(routines=routines)
+        data=RoutineElementResponse.to_list_response(values=results)
     )
     return response
 
 
 @router.post('', response_model=Response[Message, SimpleSuccessResponse])
 def create_routine_router(routine: RoutineCreateRequest, db: Session = Depends(get_db), account: Optional[str] = Header(None)):
-    print(account)
     success = create_routine(db, routine, account)
     response = Response[Message, SimpleSuccessResponse](
         message=Message(status=HttpStatus.ROUTINE_CREATE_OK, msg=ROUTINE_CREATE_MESSAGE),
