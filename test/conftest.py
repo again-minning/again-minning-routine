@@ -13,9 +13,11 @@ from main import app
 @pytest.fixture(scope='function')
 def db() -> Generator:
     db: Session = SessionLocal()
-    yield db
-    db.rollback()
-    db.close()
+    try:
+        yield db
+        db.rollback()
+    finally:
+        db.close()
 
 
 def override_get_db():
