@@ -1,8 +1,12 @@
 
-from dateutil.parser import parse, ParserError
-from datetime import timedelta
-from pytz import timezone, utc
 import datetime
+import re
+from datetime import timedelta
+
+from dateutil.parser import parse, ParserError
+from pytz import timezone, utc
+
+from routine.constants.routine_message import ROUTINE_FIELD_DATE_ERROR_MESSAGE
 
 KST = timezone('Asia/Seoul')
 
@@ -99,3 +103,11 @@ class DateUtil:
 
     def return_prev_between_date(self, date):
         return self.return_prev_start_date(date), self.return_prev_end_date(date)
+
+
+def validate_date(request):
+    regex = re.compile(r'^[\d]{4}-[\d]{2}-[\d]{2}$')
+    valid = regex.search(request)
+    if valid is None:
+        raise ValueError(ROUTINE_FIELD_DATE_ERROR_MESSAGE)
+    return request

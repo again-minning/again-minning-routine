@@ -6,8 +6,9 @@ from sqlalchemy.orm import Session
 from base.database.database import get_db
 from base.utils.constants import HttpStatus
 from base.utils.message import Response, Message
-from routine.constants.routine_message import ROUTINE_CREATE_MESSAGE, ROUTINE_RESULTS_UPDATE_MESSAGE, ROUTINE_GET_MESSAGE, ROUTINE_UPDATE_MESSAGE
-from routine.repository.routine_repository import create_routine, get_routine_list, update_or_create_routine_result, get_routine_detail, patch_routine_detail
+from base.utils.time import validate_date
+from routine.constants.routine_message import ROUTINE_CREATE_MESSAGE, ROUTINE_RESULTS_UPDATE_MESSAGE, ROUTINE_GET_MESSAGE, ROUTINE_UPDATE_MESSAGE, ROUTINE_RESULT_CANCEL_MESSAGE
+from routine.repository.routine_repository import create_routine, get_routine_list, update_or_create_routine_result, get_routine_detail, patch_routine_detail, cancel_routine_results
 from routine.schemas import RoutineCreateRequest, SimpleSuccessResponse, RoutineElementResponse, RoutineResultUpdateRequest, RoutineDetailResponse
 
 router = APIRouter(prefix='/api/v1/routines', tags=['routines'])
@@ -33,8 +34,9 @@ def create_routine_router(routine: RoutineCreateRequest, db: Session = Depends(g
 
 
 @router.post('/{routine_id}/check-result', response_model=Response[Message, SimpleSuccessResponse])
-def update_routine_result_router(routine_id: int, request: RoutineResultUpdateRequest, db: Session = Depends(get_db)):
-    success = update_or_create_routine_result(db=db, routine_id=routine_id, reqeust=request)
+def update_routine_result_router(routine_id: int, date: str, request: RoutineResultUpdateRequest, db: Session = Depends(get_db)):
+    validate_date(date)
+    success = update_or_create_routine_result(db=db, routine_id=routine_id, date=date, reqeust=request)
     response = Response(
         message=Message(status=HttpStatus.ROUTINE_OK, msg=ROUTINE_RESULTS_UPDATE_MESSAGE),
         data=SimpleSuccessResponse(success=success)
@@ -57,6 +59,17 @@ def patch_routine_detail_router(routine_id: int, request: RoutineCreateRequest, 
     success = patch_routine_detail(db=db, routine_id=routine_id, request=request, account=account)
     response = Response[Message, SimpleSuccessResponse](
         message=Message(status=HttpStatus.ROUTINE_PATCH_OK, msg=ROUTINE_UPDATE_MESSAGE),
+        data=SimpleSuccessResponse(success=success)
+    )
+    return response
+
+
+@router.patch('/cancel/{routine_id}', response_model=Response[Message, SimpleSuccessResponse])
+def cancel_routine_results_router(routine_id: int, date: str, db: Session = Depends(get_db), account: Optional[str] = Header(None)):
+    validate_date(date)
+    success = cancel_routine_results(routine_id=routine_id, date=date, db=db)
+    response = Response[Message, SimpleSuccessResponse](
+        message=Message(status=HttpStatus.ROUTINE_PATCH_OK, msg=ROUTINE_RESULT_CANCEL_MESSAGE),
         data=SimpleSuccessResponse(success=success)
     )
     return response
