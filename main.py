@@ -7,7 +7,7 @@ from base.database.connection import Connection
 from base.utils.constants import ConnectionMode
 from retrospect import retrospectRouters
 from routine import routine_routers
-Connection(ddl_mode=ConnectionMode.NONE)
+Connection(ddl_mode=ConnectionMode.CREATE)
 app = FastAPI()
 
 app.include_router(routine_routers.router)
