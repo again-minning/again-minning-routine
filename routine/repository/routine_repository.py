@@ -2,6 +2,7 @@ from sqlalchemy import and_
 from sqlalchemy.orm import Session, load_only, subqueryload, joinedload
 
 from base.utils.time import convert_str2time, convert_str2datetime
+from routine.constants.result import Result
 from routine.constants.week import Week
 from routine.models.routine import Routine
 from routine.models.routineDay import RoutineDay
@@ -43,9 +44,9 @@ def create_routine(db: Session, routine: RoutineCreateRequest, account: str):
     return True
 
 
-def update_or_create_routine_result(db: Session, routine_id: int, reqeust: RoutineResultUpdateRequest):
+def update_or_create_routine_result(db: Session, routine_id: int, date: str, reqeust: RoutineResultUpdateRequest):
     result = reqeust.result
-    yymmdd = convert_str2datetime(reqeust.date)
+    yymmdd = convert_str2datetime(date)
     routine_result: RoutineResult = db.query(RoutineResult).filter(
         and_(RoutineResult.routine_id == routine_id,
              RoutineResult.yymmdd == yymmdd)
@@ -71,5 +72,20 @@ def patch_routine_detail(db: Session, request: RoutineCreateRequest, routine_id:
     routine.update_routine(request)
     request_days = set(request.days)
     routine.patch_days(db=db, request_days=request_days)
+    db.commit()
+    return True
+
+
+def cancel_routine_results(db: Session, routine_id: int, date: str):
+    date = convert_str2datetime(date)
+
+    routine_result: RoutineResult = db.query(RoutineResult).filter(
+        and_(
+            RoutineResult.routine_id == routine_id,
+            RoutineResult.yymmdd == date
+        )
+    ).first()
+
+    routine_result.result = Result.NOT
     db.commit()
     return True

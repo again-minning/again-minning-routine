@@ -6,7 +6,7 @@ from pydantic import BaseModel, validator, root_validator
 from routine.constants.category import Category
 from routine.constants.result import Result
 from routine.constants.routine_message import \
-    ROUTINE_FIELD_DAYS_ERROR_MESSAGE, ROUTINE_FIELD_GOAL_ERROR_MESSAGE, ROUTINE_FIELD_TITLE_ERROR_MESSAGE, ROUTINE_FIELD_START_TIME_ERROR_MESSAGE, ROUTINE_FIELD_DATE_ERROR_MESSAGE
+    ROUTINE_FIELD_DAYS_ERROR_MESSAGE, ROUTINE_FIELD_GOAL_ERROR_MESSAGE, ROUTINE_FIELD_TITLE_ERROR_MESSAGE, ROUTINE_FIELD_START_TIME_ERROR_MESSAGE
 from routine.constants.week import Week
 
 
@@ -94,15 +94,6 @@ class RoutineElementResponse(BaseModel):
 
 class RoutineResultUpdateRequest(BaseModel):
     result: Result
-    date: str
-
-    @validator('date')
-    def validate_date(cls, request):
-        regex = re.compile(r'^[\d]{4}-[\d]{2}-[\d]{2}$')
-        valid = regex.search(request)
-        if valid is None:
-            raise ValueError(ROUTINE_FIELD_DATE_ERROR_MESSAGE)
-        return request
 
 
 class RoutineDaysResponse(BaseModel):

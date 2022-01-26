@@ -7,16 +7,15 @@ from routine.models.routine import Routine, RoutineDay, RoutineResult
 from retrospect.models.retrospect import Retrospect
 from retrospect.models.snapshot import Snapshot
 
-
 models = [Routine, RoutineDay, RoutineResult, Retrospect, Snapshot]
 
-CONNECTION = (
-    routine.Base.metadata.create_all(bind=engine),
-    routineDay.Base.metadata.create_all(bind=engine),
-    retrospect.Base.metadata.create_all(bind=engine),
-    snapshot.Base.metadata.create_all(bind=engine),
+
+def CONNECTION():
+    routine.Base.metadata.create_all(bind=engine)
+    routineDay.Base.metadata.create_all(bind=engine)
+    retrospect.Base.metadata.create_all(bind=engine)
+    snapshot.Base.metadata.create_all(bind=engine)
     routineResult.Base.metadata.create_all(bind=engine)
-)
 
 
 class Connection:
@@ -30,10 +29,10 @@ class Connection:
             return
         if self.ddl_mode == ConnectionMode.UPDATE:
             print('===============UPDATE==================')
-            CONNECTION
+            CONNECTION()
             return
         if self.ddl_mode == ConnectionMode.CREATE:
             print('===============CREATE==================')
             Base.metadata.drop_all(bind=engine)
-            CONNECTION
+            CONNECTION()
             return

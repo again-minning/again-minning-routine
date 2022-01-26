@@ -9,13 +9,14 @@ from starlette.testclient import TestClient
 from base.utils.constants import HttpStatus
 from base.utils.time import get_now, convert_str2datetime, convert_str2date
 from routine.constants.result import Result
-from routine.constants.routine_message import ROUTINE_CREATE_MESSAGE, ROUTINE_GET_MESSAGE, ROUTINE_RESULTS_UPDATE_MESSAGE, ROUTINE_FIELD_DAYS_ERROR_MESSAGE, ROUTINE_FIELD_TITLE_ERROR_MESSAGE
+from routine.constants.routine_message import ROUTINE_CREATE_MESSAGE, ROUTINE_GET_MESSAGE,\
+    ROUTINE_RESULTS_UPDATE_MESSAGE, ROUTINE_FIELD_DAYS_ERROR_MESSAGE, ROUTINE_FIELD_TITLE_ERROR_MESSAGE, ROUTINE_RESULT_CANCEL_MESSAGE
 from routine.constants.week import Week
 from routine.models.routine import Routine
 from routine.models.routineDay import RoutineDay
 from routine.models.routineResult import RoutineResult
-from routine.repository.routine_repository import patch_routine_detail
-from routine.schemas import RoutineCreateRequest
+from routine.repository.routine_repository import patch_routine_detail, update_or_create_routine_result, create_routine
+from routine.schemas import RoutineCreateRequest, RoutineResultUpdateRequest
 from test.conftest import maintain_idempotent
 
 routines_router_url = '/api/v1/routines'
@@ -296,12 +297,10 @@ def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_�
     with patch('base.utils.time.get_now') as now:
         now.return_value = convert_str2datetime(tomorrow.strftime("%Y-%m-%d"))
         routine_result_data = {
-            'result': 'DONE',
-            'weekday': Week.get_weekday(tomorrow.weekday()),
-            'date': tomorrow.strftime("%Y-%m-%d")
+            'result': 'DONE'
         }
         response = client.post(
-            f'{routines_router_url}/{routine_id}/check-result',
+            f'{routines_router_url}/{routine_id}/check-result?date={tomorrow.strftime("%Y-%m-%d")}',
             json=routine_result_data
         )
     result = response.json()
@@ -416,13 +415,11 @@ def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Se
     day = str(convert_str2date(now))
     date = convert_str2datetime(day)
     routine_data = {
-        'result': 'DONE',
-        'weekday': weekday.value,
-        'date': date.strftime("%Y-%m-%d")
+        'result': 'DONE'
     }
     # when
     response = client.post(
-        f'{routines_router_url}/{routine.id}/check-result',
+        f'{routines_router_url}/{routine.id}/check-result?date={date.strftime("%Y-%m-%d")}',
         json=routine_data
     )
     # then
@@ -463,13 +460,11 @@ def test_루틴_결과_체크하는데_Default인_경우(db: Session, client: Te
     day = str(convert_str2date(now))
     date = convert_str2datetime(day)
     routine_data = {
-        'result': 'DONE',
-        'weekday': weekday.value,
-        'date': date.strftime("%Y-%m-%d")
+        'result': 'DONE'
     }
     # when
     response = client.post(
-        f'{routines_router_url}/{routine.id}/check-result',
+        f'{routines_router_url}/{routine.id}/check-result?date={date.strftime("%Y-%m-%d")}',
         json=routine_data
     )
     # then
@@ -515,30 +510,37 @@ def test_루틴_디테일_조회(db: Session, client: TestClient):
     assert_that(len(body['days'])).is_equal_to(7)
 
 
+@maintain_idempotent
 def test_루틴_수행여부_취소(db: Session, client: TestClient):
     # given
-    """
-    수행요일 확인
-    루틴 아이디, 해당 날짜
-    :return:
-    """
+    routine_data = RoutineCreateRequest(
+        title='time_test', category=1,
+        goal='daily', is_alarm=True,
+        start_time='10:00:00',
+        days=[Week.MON, Week.TUE, Week.WED, Week.THU, Week.FRI, Week.SAT, Week.SUN]
+    )
+    create_routine(db=db, routine=routine_data, account='1')
     # when
-    """
-    루틴 결과를 실패 관련 값으로 변경
-    """
+    routine = db.query(Routine).first()
+    now = str(get_now())
+    day = str(convert_str2date(now))
+    date = convert_str2datetime(day)
+
+    update_or_create_routine_result(db=db, routine_id=routine.id, date=date.strftime("%Y-%m-%d"), reqeust=RoutineResultUpdateRequest(result=Result.DONE))
+    routine_result: RoutineResult = db.query(RoutineResult).first()
+    assert_that(routine_result.result).is_equal_to(Result.DONE)
+
+    response = client.patch(
+        f'{routines_router_url}/cancel/{routine.id}?date={date.strftime("%Y-%m-%d")}',
+        headers={'account': '1'}
+    )
     # then
-    """
-    성공 여부 전달
-    {
-        'message' : {
-            'status' : 'ROUTINE_RESULT_CANCEL_OK',
-            'msg': '루틴 결과 취소에 성공하셨습니다.'
-        },
-        'data': {
-            'success': true
-        }
-    }
-    """
+    response_json = response.json()
+    message = response_json['message']
+    body = response_json['data']
+    assert_that(message['status']).is_equal_to(HttpStatus.ROUTINE_PATCH_OK.value)
+    assert_that(message['msg']).is_equal_to(ROUTINE_RESULT_CANCEL_MESSAGE)
+    assert_that(body['success']).is_true()
 
 
 def test_루틴_삭제(db: Session, client: TestClient):
