@@ -15,6 +15,7 @@ from routine.schemas import RoutineCreateRequest
 class Routine(BaseColumnMixin, TimestampMixin, Base):
 
     def __init__(self, account_id, title, goal, category, start_time, is_alarm=False):
+        super().__init__()
         self.account_id = account_id
         self.title = title
         self.goal = goal

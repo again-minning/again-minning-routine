@@ -8,7 +8,8 @@ from routine.constants.result import Result
 
 class RoutineResult(BaseColumnMixin, TimestampMixin, Base):
 
-    def __init__(self,yymmdd: str, result: Result = Result.NOT, routine_id: int = None):
+    def __init__(self, yymmdd: str, result: Result = Result.NOT, routine_id: int = None):
+        super().__init__()
         self.yymmdd = yymmdd
         self.result = result
         self.routine_id = routine_id
