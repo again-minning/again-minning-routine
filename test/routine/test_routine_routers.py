@@ -1,6 +1,7 @@
 import datetime
 from unittest.mock import patch
 
+import freezegun
 from assertpy import assert_that
 from sqlalchemy import desc, and_
 from sqlalchemy.orm import Session
@@ -9,7 +10,7 @@ from starlette.testclient import TestClient
 from base.utils.constants import HttpStatus
 from base.utils.time import get_now, convert_str2datetime, convert_str2date
 from routine.constants.result import Result
-from routine.constants.routine_message import ROUTINE_CREATE_MESSAGE, ROUTINE_GET_MESSAGE,\
+from routine.constants.routine_message import ROUTINE_CREATE_MESSAGE, ROUTINE_GET_MESSAGE, \
     ROUTINE_RESULTS_UPDATE_MESSAGE, ROUTINE_FIELD_DAYS_ERROR_MESSAGE, ROUTINE_FIELD_TITLE_ERROR_MESSAGE, ROUTINE_RESULT_CANCEL_MESSAGE
 from routine.constants.week import Week
 from routine.models.routine import Routine
@@ -48,6 +49,7 @@ def test_루틴_생성_성공했을_때(db: Session, client: TestClient):
     assert_that(body['success']).is_true()
 
 
+@freezegun.freeze_time('2022-01-27')    # 목요일
 @maintain_idempotent
 def test_루틴_생성이_해당_수행하는_요일과_맞을_때(db: Session, client: TestClient):
     # given
@@ -57,7 +59,7 @@ def test_루틴_생성이_해당_수행하는_요일과_맞을_때(db: Session, 
         'goal': 'daily',
         'is_alarm': True,
         'start_time': '10:00:00',
-        'days': ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
+        'days': ['THU']
     }
     # when
     response = client.post(
@@ -76,17 +78,16 @@ def test_루틴_생성이_해당_수행하는_요일과_맞을_때(db: Session, 
     assert_that(routine.is_alarm).is_true()
     # select routine_day
     routine_day = db.query(RoutineDay).filter(RoutineDay.routine_id == routine_id).all()
-    assert_that(len(routine_day)).is_equal_to(7)
+    assert_that(len(routine_day)).is_equal_to(1)
     # select routine_results
     routine_results = db.query(RoutineResult).filter(RoutineResult.routine_id == routine_id).all()
     assert_that(routine_results[0].result).is_equal_to('NOT')
 
 
+@freezegun.freeze_time('2022-01-27')    # 목요일
 @maintain_idempotent
 def test_루틴_생성이_해당_수행하는_요일과_맞지_않을때(db: Session, client: TestClient):
-    now_weekday = datetime.datetime.now().weekday()
-    days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
-    days.remove(Week.get_weekday(now_weekday))
+    days = ['FRI', 'SAT', 'SUN']
     # given
     data = {
         'title': 'time_test',
@@ -390,19 +391,17 @@ def test_루틴_값_수정하는데_요일이_아닌_다른_것(db: Session, cli
     assert_that(str(result_data['start_time'])).is_equal_to(patch_data.start_time)
 
 
+@freezegun.freeze_time('2022-01-27')    # 목요일
 @maintain_idempotent
 def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Session, client: TestClient):
     # given
-    now = get_now()
-    weekday = now.weekday()
-    weekday = Week.get_weekday(weekday)
     create = {
         'title': 'wake_up',
         'category': 1,
         'goal': 'daily',
         'is_alarm': True,
         'start_time': '10:00:00',
-        'days': ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
+        'days': ['THU']
     }
     # when
     client.post(
@@ -433,14 +432,11 @@ def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Se
     assert_that(routine_result.result).is_equal_to(Result.DONE)
 
 
+@freezegun.freeze_time('2022-01-27')    # 목요일
 @maintain_idempotent
 def test_루틴_결과_체크하는데_Default인_경우(db: Session, client: TestClient):
     # given
-    days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
-    now = get_now()
-    weekday = now.weekday()
-    weekday = Week.get_weekday(weekday)
-    days.remove(weekday)
+    days = ['MON', 'TUE', 'WED', 'FRI', 'SAT', 'SUN']
     create = {
         'title': 'wake_up',
         'category': 1,

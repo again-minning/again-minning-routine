@@ -9,6 +9,7 @@ from routine.constants.week import Week
 class RoutineDay(TimestampMixin, Base):
 
     def __init__(self, sequence, day):
+        super().__init__()
         self.day = day
         self.sequence = sequence
 

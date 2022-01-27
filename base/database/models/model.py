@@ -1,9 +1,14 @@
-from sqlalchemy import Column, DateTime, func, Boolean
+from sqlalchemy import Column, DateTime, Boolean
+
+from base.utils.time import get_now
 
 
 class TimestampMixin(object):
-    modified_at = Column(DateTime, default=func.now())
-    created_at = Column(DateTime, default=func.now())
+    def __init__(self):
+        self.created_at = get_now()
+        self.modified_at = get_now()
+    modified_at = Column(DateTime)
+    created_at = Column(DateTime)
 
 
 class BaseColumnMixin(object):
