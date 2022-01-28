@@ -561,18 +561,6 @@ def test_3일이상_된_루틴결과_수정했을_때(db: Session, client: TestC
         create_routine(db=db, routine=routine_data, account='1')
 
     routine = db.query(Routine).first()
-    with freezegun.freeze_time('2022-01-30'):   # 2일 경과
-        date = get_now_date()
-        routine_data = {
-            'result': 'DONE'
-        }
-        # when
-        response = client.post(
-            f'{routines_router_url}/{routine.id}/check-result?date={date.strftime("%Y-%m-%d")}',
-            json=routine_data
-        )
-        assert_that(response.status_code).is_equal_to(200)
-
     with freezegun.freeze_time('2022-01-31'):   # 3일 경과
         date = get_now_date()
         routine_data = {
@@ -584,6 +572,31 @@ def test_3일이상_된_루틴결과_수정했을_때(db: Session, client: TestC
             json=routine_data
         )
         assert_that(response.status_code).is_equal_to(400)
+
+
+@maintain_idempotent
+def test_3일이상_된_루틴결과_수정했을_때(db: Session, client: TestClient):
+    with freezegun.freeze_time('2022-01-28'):
+        routine_data = RoutineCreateRequest(
+            title='time_test', category=1,
+            goal='daily', is_alarm=True,
+            start_time='10:00:00',
+            days=[Week.MON, Week.TUE, Week.WED, Week.THU, Week.FRI, Week.SAT, Week.SUN]
+        )
+        create_routine(db=db, routine=routine_data, account='1')
+
+    routine = db.query(Routine).first()
+    with freezegun.freeze_time('2022-01-30'):   # 2일 경과
+        date = get_now_date()
+        routine_data = {
+            'result': 'DONE'
+        }
+        # when
+        response = client.post(
+            f'{routines_router_url}/{routine.id}/check-result?date={date.strftime("%Y-%m-%d")}',
+            json=routine_data
+        )
+        assert_that(response.status_code).is_equal_to(200)
 
 
 @maintain_idempotent
