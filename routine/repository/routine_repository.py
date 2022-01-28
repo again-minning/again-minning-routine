@@ -1,8 +1,10 @@
 from sqlalchemy import and_
 from sqlalchemy.orm import Session, load_only, subqueryload, joinedload
 
+from base.exception.exception import NotFoundException
 from base.utils.time import convert_str2time, convert_str2datetime
 from routine.constants.result import Result
+from routine.constants.routine_message import ROUTINE_NO_DATA_RESPONSE
 from routine.constants.week import Week
 from routine.models.routine import Routine
 from routine.models.routineDay import RoutineDay
@@ -34,7 +36,7 @@ def create_routine(db: Session, routine: RoutineCreateRequest, account: str):
 
     db_routine = Routine(
         title=routine.title, category=routine.category,
-        goal=routine.goal, start_time=start_time, account_id=account, is_alarm=routine.is_alarm
+        goal=routine.goal, start_time=start_time, account_id=int(account), is_alarm=routine.is_alarm
     )
 
     db_routine.init_days(days)
@@ -68,7 +70,9 @@ def get_routine_detail(db: Session, routine_id: int):
 
 
 def patch_routine_detail(db: Session, request: RoutineCreateRequest, routine_id: int, account: str):
-    routine: Routine = db.query(Routine).filter(and_(Routine.id == routine_id, Routine.account_id == account)).first()
+    routine: Routine = db.query(Routine).filter(and_(Routine.id == routine_id, Routine.account_id == int(account))).first()
+    if routine is None:
+        raise NotFoundException(name=ROUTINE_NO_DATA_RESPONSE)
     routine.update_routine(request)
     request_days = set(request.days)
     routine.patch_days(db=db, request_days=request_days)
@@ -85,7 +89,8 @@ def cancel_routine_results(db: Session, routine_id: int, date: str):
             RoutineResult.yymmdd == date
         )
     ).first()
-
+    if routine_result is None:
+        raise NotFoundException(name=ROUTINE_NO_DATA_RESPONSE)
     routine_result.result = Result.NOT
     db.commit()
     return True
