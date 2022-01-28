@@ -11,7 +11,7 @@ from base.utils.constants import HttpStatus
 from base.utils.time import get_now, convert_str2datetime, convert_str2date
 from routine.constants.result import Result
 from routine.constants.routine_message import ROUTINE_CREATE_MESSAGE, ROUTINE_GET_MESSAGE, \
-    ROUTINE_RESULTS_UPDATE_MESSAGE, ROUTINE_FIELD_DAYS_ERROR_MESSAGE, ROUTINE_FIELD_TITLE_ERROR_MESSAGE, ROUTINE_RESULT_CANCEL_MESSAGE
+    ROUTINE_RESULTS_UPDATE_MESSAGE, ROUTINE_FIELD_DAYS_ERROR_MESSAGE, ROUTINE_FIELD_TITLE_ERROR_MESSAGE, ROUTINE_RESULT_CANCEL_MESSAGE, ROUTINE_NO_DATA_RESPONSE
 from routine.constants.week import Week
 from routine.models.routine import Routine
 from routine.models.routineDay import RoutineDay
@@ -49,7 +49,7 @@ def test_루틴_생성_성공했을_때(db: Session, client: TestClient):
     assert_that(body['success']).is_true()
 
 
-@freezegun.freeze_time('2022-01-27')    # 목요일
+@freezegun.freeze_time('2022-01-27')  # 목요일
 @maintain_idempotent
 def test_루틴_생성이_해당_수행하는_요일과_맞을_때(db: Session, client: TestClient):
     # given
@@ -84,7 +84,7 @@ def test_루틴_생성이_해당_수행하는_요일과_맞을_때(db: Session, 
     assert_that(routine_results[0].result).is_equal_to('NOT')
 
 
-@freezegun.freeze_time('2022-01-27')    # 목요일
+@freezegun.freeze_time('2022-01-27')  # 목요일
 @maintain_idempotent
 def test_루틴_생성이_해당_수행하는_요일과_맞지_않을때(db: Session, client: TestClient):
     days = ['FRI', 'SAT', 'SUN']
@@ -391,7 +391,7 @@ def test_루틴_값_수정하는데_요일이_아닌_다른_것(db: Session, cli
     assert_that(str(result_data['start_time'])).is_equal_to(patch_data.start_time)
 
 
-@freezegun.freeze_time('2022-01-27')    # 목요일
+@freezegun.freeze_time('2022-01-27')  # 목요일
 @maintain_idempotent
 def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Session, client: TestClient):
     # given
@@ -432,7 +432,7 @@ def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Se
     assert_that(routine_result.result).is_equal_to(Result.DONE)
 
 
-@freezegun.freeze_time('2022-01-27')    # 목요일
+@freezegun.freeze_time('2022-01-27')  # 목요일
 @maintain_idempotent
 def test_루틴_결과_체크하는데_Default인_경우(db: Session, client: TestClient):
     # given
@@ -539,6 +539,76 @@ def test_루틴_수행여부_취소(db: Session, client: TestClient):
     assert_that(body['success']).is_true()
 
 
+@maintain_idempotent
+def test_존재하지_않는_아이디_조회했을_때(db: Session, client: TestClient):
+    response = client.get(
+        f'{routines_router_url}/123'
+    )
+    result = response.json()
+    assert_that(result['path']).is_equal_to(f'{routines_router_url}/123')
+    assert_that(result['body']).is_equal_to(ROUTINE_NO_DATA_RESPONSE)
+
+
+@maintain_idempotent
+def test_3일이상_된_루틴결과_수정했을_때(db: Session, client: TestClient):
+    with freezegun.freeze_time('2022-01-28'):
+        routine_data = RoutineCreateRequest(
+            title='time_test', category=1,
+            goal='daily', is_alarm=True,
+            start_time='10:00:00',
+            days=[Week.MON, Week.TUE, Week.WED, Week.THU, Week.FRI, Week.SAT, Week.SUN]
+        )
+        create_routine(db=db, routine=routine_data, account='1')
+
+    routine = db.query(Routine).first()
+    with freezegun.freeze_time('2022-01-31'):   # 3일 경과
+        date = get_now_date()
+        routine_data = {
+            'result': 'YET'
+        }
+        # when
+        response = client.post(
+            f'{routines_router_url}/{routine.id}/check-result?date={date.strftime("%Y-%m-%d")}',
+            json=routine_data
+        )
+        assert_that(response.status_code).is_equal_to(400)
+
+
+@maintain_idempotent
+def test_3일이상_된_루틴결과_수정했을_때(db: Session, client: TestClient):
+    with freezegun.freeze_time('2022-01-28'):
+        routine_data = RoutineCreateRequest(
+            title='time_test', category=1,
+            goal='daily', is_alarm=True,
+            start_time='10:00:00',
+            days=[Week.MON, Week.TUE, Week.WED, Week.THU, Week.FRI, Week.SAT, Week.SUN]
+        )
+        create_routine(db=db, routine=routine_data, account='1')
+
+    routine = db.query(Routine).first()
+    with freezegun.freeze_time('2022-01-30'):   # 2일 경과
+        date = get_now_date()
+        routine_data = {
+            'result': 'DONE'
+        }
+        # when
+        response = client.post(
+            f'{routines_router_url}/{routine.id}/check-result?date={date.strftime("%Y-%m-%d")}',
+            json=routine_data
+        )
+        assert_that(response.status_code).is_equal_to(200)
+
+
+@maintain_idempotent
+def test_수행여부_취소하고자_하는데_해당_아이디가_없을_때(db: Session, client: TestClient):
+    response = client.patch(
+        f'{routines_router_url}/cancel/123?date=2022-01-28',
+        headers={'account': '1'}
+    )
+    assert_that(response.status_code).is_equal_to(400)
+    pass
+
+
 def test_루틴_삭제(db: Session, client: TestClient):
     # given
     """
@@ -589,3 +659,10 @@ def test_루틴_순서_변경(db: Session, client: TestClient):
         }
     }
     """
+
+
+def get_now_date():
+    now = str(get_now())
+    day = str(convert_str2date(now))
+    date = convert_str2datetime(day)
+    return date

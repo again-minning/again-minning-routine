@@ -8,3 +8,5 @@ ROUTINE_FIELD_DAYS_ERROR_MESSAGE = '최소 한 개의 요일을 선택해주세�
 ROUTINE_FIELD_START_TIME_ERROR_MESSAGE = '반드시 start_time 의 형식은 hh:mm:ss 또는 hh:mm 이어야 합니다.'
 ROUTINE_FIELD_DATE_ERROR_MESSAGE = '반드시 date 의 형식은 yyyy-mm-dd 이어야 합니다.'
 ROUTINE_RESULT_CANCEL_MESSAGE = '루틴 결과 취소 업데이트에 성공했습니다.'
+ROUTINE_NO_DATA_RESPONSE = '해당 값으로 조회되는 값이 없습니다.'
+ROUTINE_UPDATE_PERIOD_OVER_RESPONSE = '루틴 수정 날짜 기한을 넘겼습니다.'
