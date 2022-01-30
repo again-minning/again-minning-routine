@@ -18,7 +18,7 @@ router = APIRouter(prefix='/api/v1/routines', tags=['routines'])
 
 @router.get('/account', response_model=Response[Message, Optional[List[RoutineElementResponse]]])
 def get_routine_list_router(today: Optional[str], db: Session = Depends(get_db), account: Optional[str] = Header(None)):
-    results = get_routine_list(db, account, today)
+    results = get_routine_list(db, int(account), today)
     if results is None:
         raise NotFoundException(name=ROUTINE_NO_DATA_RESPONSE)
     response = Response(
@@ -30,7 +30,7 @@ def get_routine_list_router(today: Optional[str], db: Session = Depends(get_db),
 
 @router.post('', response_model=Response[Message, SimpleSuccessResponse])
 def create_routine_router(routine: RoutineCreateRequest, db: Session = Depends(get_db), account: Optional[str] = Header(None)):
-    success = create_routine(db, routine, account)
+    success = create_routine(db, routine, int(account))
     response = Response[Message, SimpleSuccessResponse](
         message=Message(status=HttpStatus.ROUTINE_CREATE_OK, msg=ROUTINE_CREATE_MESSAGE),
         data=SimpleSuccessResponse(success=success))
@@ -63,7 +63,7 @@ def get_routine_detail_router(routine_id: int, db: Session = Depends(get_db)):
 
 @router.patch('/{routine_id}', response_model=Response[Message, SimpleSuccessResponse])
 def patch_routine_detail_router(routine_id: int, request: RoutineCreateRequest, db: Session = Depends(get_db), account: Optional[str] = Header(None)):
-    success = patch_routine_detail(db=db, routine_id=routine_id, request=request, account=account)
+    success = patch_routine_detail(db=db, routine_id=routine_id, request=request, account=int(account))
     response = Response[Message, SimpleSuccessResponse](
         message=Message(status=HttpStatus.ROUTINE_PATCH_OK, msg=ROUTINE_UPDATE_MESSAGE),
         data=SimpleSuccessResponse(success=success)

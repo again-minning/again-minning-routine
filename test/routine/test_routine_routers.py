@@ -379,7 +379,7 @@ def test_루틴_값_수정하는데_요일이_아닌_다른_것(db: Session, cli
         start_time='11:00:00', days=['FRI', 'SAT', 'SUN']
     )
     # when
-    patch_routine_detail(db=db, routine_id=routine.id, request=patch_data, account='1')
+    patch_routine_detail(db=db, routine_id=routine.id, request=patch_data, account=1)
     # then
     response = client.get(
         f'{routines_router_url}/{routine.id}'
@@ -515,7 +515,7 @@ def test_루틴_수행여부_취소(db: Session, client: TestClient):
         start_time='10:00:00',
         days=[Week.MON, Week.TUE, Week.WED, Week.THU, Week.FRI, Week.SAT, Week.SUN]
     )
-    create_routine(db=db, routine=routine_data, account='1')
+    create_routine(db=db, routine=routine_data, account=1)
     # when
     routine = db.query(Routine).first()
     now = str(get_now())
@@ -558,7 +558,7 @@ def test_3일이상_된_루틴결과_수정했을_때(db: Session, client: TestC
             start_time='10:00:00',
             days=[Week.MON, Week.TUE, Week.WED, Week.THU, Week.FRI, Week.SAT, Week.SUN]
         )
-        create_routine(db=db, routine=routine_data, account='1')
+        create_routine(db=db, routine=routine_data, account=1)
 
     routine = db.query(Routine).first()
     with freezegun.freeze_time('2022-01-31'):   # 3일 경과
@@ -583,7 +583,7 @@ def test_3일이상_된_루틴결과_수정했을_때(db: Session, client: TestC
             start_time='10:00:00',
             days=[Week.MON, Week.TUE, Week.WED, Week.THU, Week.FRI, Week.SAT, Week.SUN]
         )
-        create_routine(db=db, routine=routine_data, account='1')
+        create_routine(db=db, routine=routine_data, account=1)
 
     routine = db.query(Routine).first()
     with freezegun.freeze_time('2022-01-30'):   # 2일 경과
