@@ -10,8 +10,7 @@ from starlette.testclient import TestClient
 from base.utils.constants import HttpStatus
 from base.utils.time import get_now, convert_str2datetime, convert_str2date
 from routine.constants.result import Result
-from routine.constants.routine_message import ROUTINE_CREATE_MESSAGE, ROUTINE_GET_MESSAGE, \
-    ROUTINE_RESULTS_UPDATE_MESSAGE, ROUTINE_FIELD_DAYS_ERROR_MESSAGE, ROUTINE_FIELD_TITLE_ERROR_MESSAGE, ROUTINE_RESULT_CANCEL_MESSAGE, ROUTINE_NO_DATA_RESPONSE
+from routine.constants.routine_message import *
 from routine.constants.week import Week
 from routine.models.routine import Routine
 from routine.models.routineDay import RoutineDay
@@ -307,6 +306,7 @@ def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_�
     result = response.json()
     message = result['message']
     body = result['data']
+    # then
     assert_that(message['status']).is_equal_to(HttpStatus.ROUTINE_OK.value)
     assert_that(message['msg']).is_equal_to(ROUTINE_RESULTS_UPDATE_MESSAGE)
     assert_that(body['success']).is_true()
@@ -497,6 +497,7 @@ def test_루틴_디테일_조회(db: Session, client: TestClient):
     result = response.json()
     message = result['message']
     body = result['data']
+    # then
     assert_that(message['status']).is_equal_to(HttpStatus.ROUTINE_DETAIL_OK.value)
     assert_that(message['msg']).is_equal_to(ROUTINE_GET_MESSAGE)
     assert_that(body['id']).is_equal_to(routine.id)
@@ -571,6 +572,7 @@ def test_3일이상_된_루틴결과_수정했을_때(db: Session, client: TestC
             f'{routines_router_url}/{routine.id}/check-result?date={date.strftime("%Y-%m-%d")}',
             json=routine_data
         )
+        # then
         assert_that(response.status_code).is_equal_to(400)
 
 
@@ -596,6 +598,7 @@ def test_3일이상_된_루틴결과_수정했을_때(db: Session, client: TestC
             f'{routines_router_url}/{routine.id}/check-result?date={date.strftime("%Y-%m-%d")}',
             json=routine_data
         )
+        # then
         assert_that(response.status_code).is_equal_to(200)
 
 

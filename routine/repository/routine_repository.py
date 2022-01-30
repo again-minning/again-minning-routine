@@ -9,7 +9,7 @@ from routine.constants.week import Week
 from routine.models.routine import Routine
 from routine.models.routineDay import RoutineDay
 from routine.models.routineResult import RoutineResult
-from routine.schemas import RoutineCreateRequest, RoutineResultUpdateRequest
+from routine.schemas import RoutineCreateRequest, RoutineResultUpdateRequest, RoutineSequenceRequest
 
 
 def get_routine_list(db: Session, account_id: int, today: str):
