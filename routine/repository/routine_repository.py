@@ -94,3 +94,25 @@ def cancel_routine_results(db: Session, routine_id: int, date: str):
     routine_result.result = Result.NOT
     db.commit()
     return True
+
+
+def delete_routine(db: Session, routine_id: int):
+    db.query(Routine).filter(Routine.id == routine_id).delete()
+    db.commit()
+    return True
+
+
+def change_routine_sequence(db: Session, weekday: int, account_id: int, routine_sequences: RoutineSequenceRequest):
+    day = Week.get_weekday(weekday)
+    routine_days = db.query(RoutineDay).join(Routine).filter(
+        and_(
+            RoutineDay.day == day,
+            Routine.account_id == account_id
+        )
+    ).all()
+
+    key_routine_value_sequence_dicts = routine_sequences.to_dict()
+    for routine_day in routine_days:
+        routine_day.sequence = key_routine_value_sequence_dicts[routine_day.routine_id]
+    db.commit()
+    return True

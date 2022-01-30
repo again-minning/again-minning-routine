@@ -80,3 +80,24 @@ def cancel_routine_results_router(routine_id: int, date: str, db: Session = Depe
         data=SimpleSuccessResponse(success=success)
     )
     return response
+
+
+@router.delete('/{routine_id}', response_model=Response[Message, SimpleSuccessResponse])
+def delete_routine_router(routine_id: int, db: Session = Depends(get_db), account: Optional[str] = Header(None)):
+    success = delete_routine(routine_id=routine_id, db=db)
+    response = Response[Message, SimpleSuccessResponse](
+        message=Message(status=HttpStatus.ROUTINE_DELETE_OK, msg=ROUTINE_DELETE_RESPONSE),
+        data=SimpleSuccessResponse(success=success)
+    )
+    return response
+
+
+@router.patch('/days/sequence', response_model=Response[Message, SimpleSuccessResponse])
+def change_routine_sequence_router(date: str, routine_sequences: RoutineSequenceRequest, db: Session = Depends(get_db), account: Optional[str] = Header(None)):
+    weekday = convert_str2datetime(date).weekday()
+    success = change_routine_sequence(account_id=int(account), weekday=weekday, db=db, routine_sequences=routine_sequences)
+    response = Response[Message, SimpleSuccessResponse](
+        message=Message(status=HttpStatus.ROUTINE_DELETE_OK, msg=ROUTINE_SEQUENCE_CHANGE_RESPONSE),
+        data=SimpleSuccessResponse(success=success)
+    )
+    return response
