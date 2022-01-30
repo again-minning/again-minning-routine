@@ -6,7 +6,7 @@ from assertpy import assert_that
 from sqlalchemy import desc, and_
 from sqlalchemy.orm import Session
 from starlette.testclient import TestClient
-
+from test.utils import get_now_date
 from base.utils.constants import HttpStatus
 from base.utils.time import get_now, convert_str2datetime, convert_str2date
 from routine.constants.result import Result
