@@ -121,3 +121,18 @@ class RoutineDetailResponse(BaseModel):
 
 class SimpleSuccessResponse(BaseModel):
     success: bool
+
+
+class RoutineSequenceElementRequest(BaseModel):
+    routine_id: int
+    sequence: int
+
+
+class RoutineSequenceRequest(BaseModel):
+    routine_sequences: List[RoutineSequenceElementRequest]
+
+    def to_dict(self):
+        res = {}
+        for routine_sequence in self.routine_sequences:
+            res[routine_sequence.routine_id] = routine_sequence.sequence
+        return res

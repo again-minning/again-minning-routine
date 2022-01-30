@@ -10,3 +10,5 @@ ROUTINE_FIELD_DATE_ERROR_MESSAGE = '반드시 date 의 형식은 yyyy-mm-dd 이�
 ROUTINE_RESULT_CANCEL_MESSAGE = '루틴 결과 취소 업데이트에 성공했습니다.'
 ROUTINE_NO_DATA_RESPONSE = '해당 값으로 조회되는 값이 없습니다.'
 ROUTINE_UPDATE_PERIOD_OVER_RESPONSE = '루틴 수정 날짜 기한을 넘겼습니다.'
+ROUTINE_DELETE_RESPONSE = '루틴 관련 정보가 모두 삭제 되었습니다.'
+ROUTINE_SEQUENCE_CHANGE_RESPONSE = '해당 날짜에 대한 루틴 순서가 변경되었습니다.'

@@ -6,12 +6,11 @@ from assertpy import assert_that
 from sqlalchemy import desc, and_
 from sqlalchemy.orm import Session
 from starlette.testclient import TestClient
-
+from test.utils import get_now_date
 from base.utils.constants import HttpStatus
 from base.utils.time import get_now, convert_str2datetime, convert_str2date
 from routine.constants.result import Result
-from routine.constants.routine_message import ROUTINE_CREATE_MESSAGE, ROUTINE_GET_MESSAGE, \
-    ROUTINE_RESULTS_UPDATE_MESSAGE, ROUTINE_FIELD_DAYS_ERROR_MESSAGE, ROUTINE_FIELD_TITLE_ERROR_MESSAGE, ROUTINE_RESULT_CANCEL_MESSAGE, ROUTINE_NO_DATA_RESPONSE
+from routine.constants.routine_message import *
 from routine.constants.week import Week
 from routine.models.routine import Routine
 from routine.models.routineDay import RoutineDay
@@ -307,6 +306,7 @@ def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_�
     result = response.json()
     message = result['message']
     body = result['data']
+    # then
     assert_that(message['status']).is_equal_to(HttpStatus.ROUTINE_OK.value)
     assert_that(message['msg']).is_equal_to(ROUTINE_RESULTS_UPDATE_MESSAGE)
     assert_that(body['success']).is_true()
@@ -379,7 +379,7 @@ def test_루틴_값_수정하는데_요일이_아닌_다른_것(db: Session, cli
         start_time='11:00:00', days=['FRI', 'SAT', 'SUN']
     )
     # when
-    patch_routine_detail(db=db, routine_id=routine.id, request=patch_data, account='1')
+    patch_routine_detail(db=db, routine_id=routine.id, request=patch_data, account=1)
     # then
     response = client.get(
         f'{routines_router_url}/{routine.id}'
@@ -497,6 +497,7 @@ def test_루틴_디테일_조회(db: Session, client: TestClient):
     result = response.json()
     message = result['message']
     body = result['data']
+    # then
     assert_that(message['status']).is_equal_to(HttpStatus.ROUTINE_DETAIL_OK.value)
     assert_that(message['msg']).is_equal_to(ROUTINE_GET_MESSAGE)
     assert_that(body['id']).is_equal_to(routine.id)
@@ -515,7 +516,7 @@ def test_루틴_수행여부_취소(db: Session, client: TestClient):
         start_time='10:00:00',
         days=[Week.MON, Week.TUE, Week.WED, Week.THU, Week.FRI, Week.SAT, Week.SUN]
     )
-    create_routine(db=db, routine=routine_data, account='1')
+    create_routine(db=db, routine=routine_data, account=1)
     # when
     routine = db.query(Routine).first()
     now = str(get_now())
@@ -558,7 +559,7 @@ def test_3일이상_된_루틴결과_수정했을_때(db: Session, client: TestC
             start_time='10:00:00',
             days=[Week.MON, Week.TUE, Week.WED, Week.THU, Week.FRI, Week.SAT, Week.SUN]
         )
-        create_routine(db=db, routine=routine_data, account='1')
+        create_routine(db=db, routine=routine_data, account=1)
 
     routine = db.query(Routine).first()
     with freezegun.freeze_time('2022-01-31'):   # 3일 경과
@@ -571,6 +572,7 @@ def test_3일이상_된_루틴결과_수정했을_때(db: Session, client: TestC
             f'{routines_router_url}/{routine.id}/check-result?date={date.strftime("%Y-%m-%d")}',
             json=routine_data
         )
+        # then
         assert_that(response.status_code).is_equal_to(400)
 
 
@@ -583,7 +585,7 @@ def test_3일이상_된_루틴결과_수정했을_때(db: Session, client: TestC
             start_time='10:00:00',
             days=[Week.MON, Week.TUE, Week.WED, Week.THU, Week.FRI, Week.SAT, Week.SUN]
         )
-        create_routine(db=db, routine=routine_data, account='1')
+        create_routine(db=db, routine=routine_data, account=1)
 
     routine = db.query(Routine).first()
     with freezegun.freeze_time('2022-01-30'):   # 2일 경과
@@ -596,6 +598,7 @@ def test_3일이상_된_루틴결과_수정했을_때(db: Session, client: TestC
             f'{routines_router_url}/{routine.id}/check-result?date={date.strftime("%Y-%m-%d")}',
             json=routine_data
         )
+        # then
         assert_that(response.status_code).is_equal_to(200)
 
 
@@ -609,60 +612,68 @@ def test_수행여부_취소하고자_하는데_해당_아이디가_없을_때(d
     pass
 
 
+@maintain_idempotent
 def test_루틴_삭제(db: Session, client: TestClient):
     # given
-    """
-    :parameter: 루틴 아이디, 유저 아이디
-    :return:
-    """
+    with freezegun.freeze_time('2022-01-30'):   # 일요일
+        routine_data = RoutineCreateRequest(
+            title='time_test', category=1,
+            goal='daily', is_alarm=True,
+            start_time='10:00:00',
+            days=[Week.SUN]
+        )
+        create_routine(db=db, routine=routine_data, account=1)
+        routine = db.query(Routine).first()
     # when
-    """
-    회고를 살리느냐 안살리느냐에 따라 다를 것 같은데
-    우선 살리는 방향으로 진행할 예정
-    루틴에 관한 정보만 삭제 진행
-    """
+        response = client.delete(
+            f'{routines_router_url}/{routine.id}',
+            headers={'account': '1'}
+        )
+        result = response.json()
     # then
-    """
-    성공 여부 전달
-    {
-        'message' : {
-            'status' : 'ROUTINE_DELETE',
-            'msg': '루틴 삭제에 성공하셨습니다.'
-        },
-        'data': {
-            'success': true
-        }
-    }    
-    """
+        message = result['message']
+        assert_that(message['msg']).is_equal_to(ROUTINE_DELETE_RESPONSE)
+        assert_that(message['status']).is_equal_to(HttpStatus.ROUTINE_DELETE_OK.value)
 
 
+@maintain_idempotent
 def test_루틴_순서_변경(db: Session, client: TestClient):
     # given
-    """
-    @:param: list(루틴아이디, 순서), 유저 아이디
-    :return:
-    """
-    # when
-    """
-    for문 돌려서 dirty checking을 통해 순서 값 변경
-    """
-    # then
-    """
-    성공여부 전달
-    {
-        'message' : {
-            'status' : 'ROUTINE_CHANGE_OK',
-            'msg': '루틴 순서 변경에 성공하셨습니다.'
-        },
-        'data': {
-            'success': true
+    with freezegun.freeze_time('2022-01-30'):   # 일요일
+        routine_data = RoutineCreateRequest(
+            title='첫째', category=1,
+            goal='daily', is_alarm=True,
+            start_time='10:00:00',
+            days=[Week.SUN]
+        )
+        create_routine(db=db, routine=routine_data, account=1)
+        routine_data = RoutineCreateRequest(
+            title='둘째', category=2,
+            goal='second', is_alarm=True,
+            start_time='09:00:00',
+            days=[Week.SUN]
+        )
+        create_routine(db=db, routine=routine_data, account=1)
+        change_sequence = {
+            'routine_sequences': [
+                {
+                    'routine_id': 2,
+                    'sequence': 1
+                },
+                {
+                    'routine_id': 1,
+                    'sequence': 2
+                }
+            ]
         }
-    }
-    """
-
-
-def get_now_date():
-    now = str(get_now())
-    day = str(convert_str2date(now))
-    date = convert_str2datetime(day)
-    return date
+    # when
+        date = '2022-01-30'
+        response = client.patch(
+            f'{routines_router_url}/days/sequence?date={date}',
+            json=change_sequence,
+            headers={'account': '1'}
+        )
+    # then
+        assert_that(response.status_code).is_equal_to(200)
+        routine_id_and_sequences = db.query(RoutineDay.routine_id, RoutineDay.sequence).all()
+        assert_that(sorted(routine_id_and_sequences)).is_equal_to([(1, 2), (2, 1)])
