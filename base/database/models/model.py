@@ -10,6 +10,9 @@ class TimestampMixin(object):
     modified_at = Column(DateTime)
     created_at = Column(DateTime)
 
+    def update_modified_at(self):
+        self.modified_at = get_now()
+
 
 class BaseColumnMixin(object):
     is_delete = Column(Boolean, default=False)

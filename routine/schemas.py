@@ -119,10 +119,6 @@ class RoutineDetailResponse(BaseModel):
         return res
 
 
-class SimpleSuccessResponse(BaseModel):
-    success: bool
-
-
 class RoutineSequenceElementRequest(BaseModel):
     routine_id: int
     sequence: int

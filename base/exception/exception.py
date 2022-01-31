@@ -4,12 +4,7 @@ from starlette import status
 from starlette.responses import JSONResponse
 
 
-class NotFoundException(Exception):
-    def __init__(self, name: str):
-        self.name = name
-
-
-class PeriodOverException(Exception):
+class MinningException(Exception):
     def __init__(self, name: str):
         self.name = name
 

@@ -301,7 +301,8 @@ def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_�
         }
         response = client.post(
             f'{routines_router_url}/{routine_id}/check-result?date={tomorrow.strftime("%Y-%m-%d")}',
-            json=routine_result_data
+            json=routine_result_data,
+            headers={'account': '1'}
         )
     result = response.json()
     message = result['message']
@@ -382,7 +383,8 @@ def test_루틴_값_수정하는데_요일이_아닌_다른_것(db: Session, cli
     patch_routine_detail(db=db, routine_id=routine.id, request=patch_data, account=1)
     # then
     response = client.get(
-        f'{routines_router_url}/{routine.id}'
+        f'{routines_router_url}/{routine.id}',
+        headers={'account': '1'}
     )
     result = response.json()
     result_data = result['data']
@@ -419,7 +421,8 @@ def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Se
     # when
     response = client.post(
         f'{routines_router_url}/{routine.id}/check-result?date={date.strftime("%Y-%m-%d")}',
-        json=routine_data
+        json=routine_data,
+        headers={'account': '1'}
     )
     # then
     result = response.json()
@@ -461,7 +464,8 @@ def test_루틴_결과_체크하는데_Default인_경우(db: Session, client: Te
     # when
     response = client.post(
         f'{routines_router_url}/{routine.id}/check-result?date={date.strftime("%Y-%m-%d")}',
-        json=routine_data
+        json=routine_data,
+        headers={'account': '1'}
     )
     # then
     assert_that(response.status_code).is_equal_to(200)
@@ -492,7 +496,8 @@ def test_루틴_디테일_조회(db: Session, client: TestClient):
     assert_that(response.status_code).is_equal_to(200)
     routine: Routine = db.query(Routine).filter(Routine.title == data['title']).first()
     response = client.get(
-        f'{routines_router_url}/{routine.id}'
+        f'{routines_router_url}/{routine.id}',
+        headers={'account': '1'}
     )
     result = response.json()
     message = result['message']
@@ -543,7 +548,8 @@ def test_루틴_수행여부_취소(db: Session, client: TestClient):
 @maintain_idempotent
 def test_존재하지_않는_아이디_조회했을_때(db: Session, client: TestClient):
     response = client.get(
-        f'{routines_router_url}/123'
+        f'{routines_router_url}/123',
+        headers={'account': '1'}
     )
     result = response.json()
     assert_that(result['path']).is_equal_to(f'{routines_router_url}/123')
@@ -570,7 +576,8 @@ def test_3일이상_된_루틴결과_수정했을_때(db: Session, client: TestC
         # when
         response = client.post(
             f'{routines_router_url}/{routine.id}/check-result?date={date.strftime("%Y-%m-%d")}',
-            json=routine_data
+            json=routine_data,
+            headers={'account': '1'}
         )
         # then
         assert_that(response.status_code).is_equal_to(400)
@@ -596,7 +603,8 @@ def test_3일이상_된_루틴결과_수정했을_때(db: Session, client: TestC
         # when
         response = client.post(
             f'{routines_router_url}/{routine.id}/check-result?date={date.strftime("%Y-%m-%d")}',
-            json=routine_data
+            json=routine_data,
+            headers={'account': '1'}
         )
         # then
         assert_that(response.status_code).is_equal_to(200)
