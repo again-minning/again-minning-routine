@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from base.database.database import get_db
 from base.dependencies.header import check_account_header
-from base.exception.exception import NotFoundException
+from base.exception.exception import MinningException
 from base.schemas import SimpleSuccessResponse
 from base.utils.constants import HttpStatus
 from base.utils.message import Response, Message
@@ -22,7 +22,7 @@ router = APIRouter(prefix='/api/v1/routines', tags=['routines'], dependencies=[D
 def get_routine_list_router(today: Optional[str], db: Session = Depends(get_db), account: Optional[str] = Header(None)):
     results = get_routine_list(db, int(account), today)
     if results is None:
-        raise NotFoundException(name=ROUTINE_NO_DATA_RESPONSE)
+        raise MinningException(name=ROUTINE_NO_DATA_RESPONSE)
     response = Response(
         message=Message(status=HttpStatus.ROUTINE_LIST_OK, msg=ROUTINE_GET_MESSAGE),
         data=RoutineElementResponse.to_list_response(values=results)
@@ -55,7 +55,7 @@ def update_routine_result_router(routine_id: int, date: str, request: RoutineRes
 def get_routine_detail_router(routine_id: int, db: Session = Depends(get_db)):
     result = get_routine_detail(db=db, routine_id=routine_id)
     if result is None:
-        raise NotFoundException(name=ROUTINE_NO_DATA_RESPONSE)
+        raise MinningException(name=ROUTINE_NO_DATA_RESPONSE)
     response = Response[Message, RoutineDetailResponse](
         message=Message(status=HttpStatus.ROUTINE_DETAIL_OK, msg=ROUTINE_GET_MESSAGE),
         data=RoutineDetailResponse.to_response(result=result)

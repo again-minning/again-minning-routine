@@ -6,7 +6,7 @@ from datetime import timedelta
 from dateutil.parser import parse, ParserError
 from pytz import timezone, utc
 
-from base.exception.exception import PeriodOverException
+from base.exception.exception import MinningException
 from routine.constants.routine_message import ROUTINE_FIELD_DATE_ERROR_MESSAGE, ROUTINE_UPDATE_PERIOD_OVER_RESPONSE
 
 KST = timezone('Asia/Seoul')
@@ -119,4 +119,4 @@ def check_is_modified_period(request: str):
     now = get_now()
     diff_days = now.day - date.day
     if diff_days >= 3:
-        raise PeriodOverException(ROUTINE_UPDATE_PERIOD_OVER_RESPONSE)
+        raise MinningException(ROUTINE_UPDATE_PERIOD_OVER_RESPONSE)
