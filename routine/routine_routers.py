@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
 from base.database.database import get_db
+from base.dependencies.header import check_account_header
 from base.exception.exception import NotFoundException
 from base.utils.constants import HttpStatus
 from base.utils.message import Response, Message
@@ -13,7 +14,7 @@ from routine.repository.routine_repository import create_routine, get_routine_li
     change_routine_sequence
 from routine.schemas import RoutineCreateRequest, SimpleSuccessResponse, RoutineElementResponse, RoutineResultUpdateRequest, RoutineDetailResponse, RoutineSequenceRequest
 
-router = APIRouter(prefix='/api/v1/routines', tags=['routines'])
+router = APIRouter(prefix='/api/v1/routines', tags=['routines'], dependencies=[Depends(check_account_header)])
 
 
 @router.get('/account', response_model=Response[Message, Optional[List[RoutineElementResponse]]])
@@ -83,7 +84,7 @@ def cancel_routine_results_router(routine_id: int, date: str, db: Session = Depe
 
 
 @router.delete('/{routine_id}', response_model=Response[Message, SimpleSuccessResponse])
-def delete_routine_router(routine_id: int, db: Session = Depends(get_db), account: Optional[str] = Header(None)):
+def delete_routine_router(routine_id: int, db: Session = Depends(get_db)):
     success = delete_routine(routine_id=routine_id, db=db)
     response = Response[Message, SimpleSuccessResponse](
         message=Message(status=HttpStatus.ROUTINE_DELETE_OK, msg=ROUTINE_DELETE_RESPONSE),
