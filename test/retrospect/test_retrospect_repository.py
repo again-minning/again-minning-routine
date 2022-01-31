@@ -51,6 +51,50 @@ def test_회고_정상적으로_생성(db: Session, client: TestClient):
 
 
 @maintain_idempotent
+def test_회고_중복_체크(db: Session, client: TestClient):
+    # given
+    with freezegun.freeze_time('2022-01-31'):
+        routine_data = RoutineCreateRequest(
+            title='time_test', category=1,
+            goal='daily', is_alarm=True,
+            start_time='10:00:00',
+            days=[Week.MON]
+        )
+        create_routine(db=db, routine=routine_data, account=1)
+        routine = db.query(Routine).first()
+        data = {
+            'routine_id': routine.id,
+            'title': '회고생성',
+            'content': '그렇게 되었습니다.',
+            'date': '2022-01-31'
+        }
+        filepath = '../resource'
+        # when
+        with open(filepath, 'rb') as f:
+            client.post(
+                f'{retrospect_router_url}',
+                data=data,
+                files={'image': ('test', f, 'png')},
+                headers={'account': '1'}
+            )
+        duplicate_data = {
+            'routine_id': routine.id,
+            'title': '회고중복생성',
+            'content': '그렇게는 안될겁니다',
+            'date': '2022-01-31'
+        }
+        # when
+        response = client.post(
+            f'{retrospect_router_url}',
+            data=duplicate_data,
+            headers={'account': '1'}
+        )
+        result = response.json()
+        assert_that(response.status_code).is_equal_to(400)
+        assert_that(result['body']).is_equal_to(RETROSPECT_ALREADY_EXISTS)
+
+
+@maintain_idempotent
 def test_회고_생성_성공_이미지_파라미터가_없을_때(db: Session, client: TestClient):
     # given
     with freezegun.freeze_time('2022-01-31'):
