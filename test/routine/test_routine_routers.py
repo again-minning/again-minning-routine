@@ -10,7 +10,8 @@ from test.utils import get_now_date
 from base.utils.constants import HttpStatus
 from base.utils.time import get_now, convert_str2datetime, convert_str2date
 from routine.constants.result import Result
-from routine.constants.routine_message import *
+from routine.constants.routine_message import ROUTINE_CREATE_MESSAGE, ROUTINE_FIELD_TITLE_ERROR_MESSAGE, ROUTINE_FIELD_DAYS_ERROR_MESSAGE, ROUTINE_GET_MESSAGE, ROUTINE_RESULTS_UPDATE_MESSAGE, \
+    ROUTINE_NO_DATA_RESPONSE, ROUTINE_DELETE_RESPONSE, ROUTINE_RESULT_CANCEL_MESSAGE
 from routine.constants.week import Week
 from routine.models.routine import Routine
 from routine.models.routineDay import RoutineDay
@@ -245,7 +246,6 @@ def test_루틴_전체조회(db: Session, client: TestClient):
         json=data,
         headers={'account': '1'}
     )
-    account_id = 1
     today = get_now()
     # when
     response = client.get(
@@ -281,7 +281,6 @@ def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_�
         json=data,
         headers={'account': '1'}
     )
-    account_id = 1
     from datetime import timedelta
     today = get_now()
     tomorrow = today + timedelta(days=1)
@@ -557,7 +556,7 @@ def test_존재하지_않는_아이디_조회했을_때(db: Session, client: Tes
 
 
 @maintain_idempotent
-def test_3일이상_된_루틴결과_수정했을_때(db: Session, client: TestClient):
+def test_2일이상_된_루틴결과_수정했을_때(db: Session, client: TestClient):
     with freezegun.freeze_time('2022-01-28'):
         routine_data = RoutineCreateRequest(
             title='time_test', category=1,

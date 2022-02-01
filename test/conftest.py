@@ -24,7 +24,7 @@ def override_get_db():
     db: Session = SessionLocal()
     try:
         yield db
-    except HTTPException as e:
+    except HTTPException:
         db.rollback()
     finally:
         db.close()

@@ -20,4 +20,3 @@ class ConnectionMode(Enum):
     CREATE = 'CREATE'
     UPDATE = 'UPDATE'
     NONE = 'NONE'
-

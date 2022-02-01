@@ -15,7 +15,8 @@ from routine.models.routine import Routine
 from routine.repository.routine_repository import create_routine
 from routine.schemas import RoutineCreateRequest
 from test.conftest import maintain_idempotent
-from retrospect.constants.retrospect_message import *
+from retrospect.constants.retrospect_message import RETROSPECT_CREATE_MESSAGE, RETROSPECT_ALREADY_EXISTS, RETROSPECT_UPDATE_MESSAGE
+
 client = TestClient(app)
 retrospect_router_url = '/api/v1/retrospects'
 
@@ -259,11 +260,7 @@ def test_당일_해야하는_회고_리스트_조회():
     :return:
     """
     # when
-    """
-    당일 요일에 해당하는 루틴 목록 조회 where 오늘 회고 했는 지 안했는 지 조회
-    조회 로직은 회고와 left outer join을 해서 retrospect이 null인 것을 허용하면서 조회를 한다.
-    처음 조회를 할 때 쌩으로 다 조회하지 말고 조회 할 때 필요한 값만 조회를 한다. 
-    """
+
     # then
     """
     {

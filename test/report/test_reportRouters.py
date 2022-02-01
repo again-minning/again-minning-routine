@@ -1,9 +1,8 @@
-from assertpy import assert_that
-
 from main import app
 from fastapi.testclient import TestClient
 
 client = TestClient(app)
+
 
 def test_주_리포트_생성():
     # given
@@ -59,7 +58,6 @@ def 월_리포트_생성():
     - 카테고리 별 갯수
     - 카테고리 안에 루틴 별 상세 정보
         - 타이틀, 완료, 부분완료, 미완료
-    
     """
     # then
     """
@@ -101,7 +99,6 @@ def 월_리포트_생성():
                     '미완료' : 0
                 }
             ],
-            ... 
         }
     }
     """

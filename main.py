@@ -22,7 +22,3 @@ async def not_found_exception_handler(request: Request, exc: MinningException):
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     return await common_exception_response(exc, request)
-
-
-
-

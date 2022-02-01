@@ -130,7 +130,7 @@ def test_윤년이고_30일인_날_이전달_시작():
     # given
     day = datetime.fromisoformat('2000-04-01')
     # when
-    start= DateUtil().return_prev_start_date(day)
+    start = DateUtil().return_prev_start_date(day)
     # then
     assert_that(start).is_equal_to(datetime.fromisoformat('2000-03-01'))
 
