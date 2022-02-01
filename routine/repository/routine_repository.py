@@ -19,13 +19,20 @@ def get_routine_list(db: Session, account_id: int, today: str):
     weekday = today.weekday()
     weekday = Week.get_weekday(weekday)
 
-    routines = db.query(Routine).join(RoutineDay).filter(
+    routines = db.query(
+        Routine
+    ).join(
+        RoutineDay
+    ).filter(
         and_(
-            Routine.account_id == account_id,
+            Routine.account_id.is_(account_id),
             Routine.is_delete.is_(False),
-            RoutineDay.day == weekday
+            RoutineDay.day.is_(weekday)
         )
-    ).options(load_only(*fields), joinedload(Routine.routine_results)).all()
+    ).options(
+        load_only(*fields),
+        joinedload(Routine.routine_results)
+    ).all()
     return routines, today
 
 
@@ -49,9 +56,13 @@ def create_routine(db: Session, routine: RoutineCreateRequest, account: int):
 def update_or_create_routine_result(db: Session, routine_id: int, date: str, reqeust: RoutineResultUpdateRequest):
     result = reqeust.result
     yymmdd = convert_str2datetime(date)
-    routine_result: RoutineResult = db.query(RoutineResult).filter(
-        and_(RoutineResult.routine_id == routine_id,
-             RoutineResult.yymmdd == yymmdd)
+    routine_result: RoutineResult = db.query(
+        RoutineResult
+    ).filter(
+        and_(
+            RoutineResult.routine_id.is_(routine_id),
+            RoutineResult.yymmdd.is_(yymmdd)
+        )
     ).first()
     if routine_result:
         routine_result.update_result(result)
@@ -64,13 +75,26 @@ def update_or_create_routine_result(db: Session, routine_id: int, date: str, req
 
 def get_routine_detail(db: Session, routine_id: int):
     fields = ['title', 'category', 'start_time', 'goal', 'is_alarm']
-    return db.query(Routine).filter(
-        Routine.id == routine_id
-    ).options(subqueryload('days').load_only('day'), load_only(*fields)).first()
+    return db.query(
+        Routine
+    ).filter(
+        Routine.id.is_(routine_id)
+    ).options(
+        subqueryload('days').load_only('day'),
+        load_only(*fields)
+    ).first()
 
 
 def patch_routine_detail(db: Session, request: RoutineCreateRequest, routine_id: int, account: int):
-    routine: Routine = db.query(Routine).filter(and_(Routine.id == routine_id, Routine.account_id == account)).first()
+    routine: Routine = db.query(
+        Routine
+    ).filter(
+        and_(
+            Routine.id == routine_id,
+            Routine.account_id == account
+        )
+    ).first()
+
     if routine is None:
         raise MinningException(name=ROUTINE_NO_DATA_RESPONSE)
     routine.update_routine(request)
@@ -85,8 +109,8 @@ def cancel_routine_results(db: Session, routine_id: int, date: str):
 
     routine_result: RoutineResult = db.query(RoutineResult).filter(
         and_(
-            RoutineResult.routine_id == routine_id,
-            RoutineResult.yymmdd == date
+            RoutineResult.routine_id.is_(routine_id),
+            RoutineResult.yymmdd.is_(date)
         )
     ).first()
     if routine_result is None:
@@ -97,7 +121,7 @@ def cancel_routine_results(db: Session, routine_id: int, date: str):
 
 
 def delete_routine(db: Session, routine_id: int):
-    db.query(Routine).filter(Routine.id == routine_id).delete()
+    db.query(Routine).filter(Routine.id.is_(routine_id)).delete()
     db.commit()
     return True
 
@@ -106,13 +130,13 @@ def change_routine_sequence(db: Session, weekday: int, account_id: int, routine_
     day = Week.get_weekday(weekday)
     routine_days = db.query(RoutineDay).join(Routine).filter(
         and_(
-            RoutineDay.day == day,
-            Routine.account_id == account_id
+            RoutineDay.day.is_(day),
+            Routine.account_id.is_(account_id)
         )
     ).all()
 
-    key_routine_value_sequence_dicts = routine_sequences.to_dict()
+    routine_sequence_dicts = routine_sequences.to_dict()
     for routine_day in routine_days:
-        routine_day.sequence = key_routine_value_sequence_dicts[routine_day.routine_id]
+        routine_day.sequence = routine_sequence_dicts[routine_day.routine_id]
     db.commit()
     return True
