@@ -38,7 +38,7 @@ def test_회고_정상적으로_생성(db: Session, client: TestClient):
             'content': '그렇게 되었습니다.',
             'date': '2022-01-31'
         }
-        filepath = '../resource'
+        filepath = './resource/test.png'
         # when
         with open(filepath, 'rb') as f:
             response = client.post(
@@ -71,7 +71,7 @@ def test_회고_중복_체크(db: Session, client: TestClient):
             'content': '그렇게 되었습니다.',
             'date': '2022-01-31'
         }
-        filepath = '../resource'
+        filepath = './resource/test.png'
         # when
         with open(filepath, 'rb') as f:
             client.post(
@@ -178,7 +178,7 @@ def test_회고_수정할_때_이미지에_대해서(db: Session, client: TestCl
         put_data = {
             'content': '그렇게 되었습니다.'
         }
-        filepath = '../resource'
+        filepath = './resource/test2.png'
         # when
         with open(filepath, 'rb') as f:
             response = client.put(
@@ -220,7 +220,7 @@ def test_회고_수정할_때_글_내용_수정할_때(db: Session, client: Test
         )
 
         retrospect = db.query(Retrospect).first()
-        filepath = '../resource'
+        filepath = './resource/test.png'
         with open(filepath, 'rb') as f:
             put_detail_retrospect(retrospect_id=retrospect.id, content='수정했어요', db=db, image=UploadFile(filename='test.png', file=f))
             change_retrospect = db.query(Retrospect).filter(Retrospect.id == retrospect.id).first()
