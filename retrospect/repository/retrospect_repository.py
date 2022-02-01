@@ -24,6 +24,38 @@ def create_retrospect(db: Session, routine_id: int, title: str, content: str, da
     return True
 
 
+def get_detail_retrospect(db: Session, retrospect_id: int):
+    retrospect = db.query(
+        Retrospect
+    ).options(
+        joinedload(Retrospect.image)
+    ).filter(
+        Retrospect.id == retrospect_id
+    ).first()
+
+    if not retrospect:
+        raise MinningException(RETROSPECT_NOT_FOUND_ID)
+    return retrospect
+
+
+def put_detail_retrospect(retrospect_id: int, content: str, image: UploadFile, db: Session):
+    retrospect = db.query(
+        Retrospect
+    ).options(
+        joinedload(Retrospect.image)
+    ).filter(
+        Retrospect.id == retrospect_id
+    ).first()
+
+    retrospect.content = content
+    if retrospect.image:
+        retrospect.image.url = image.filename
+    elif image:
+        retrospect.add_image(url=image.filename)
+    db.commit()
+    return True
+
+
 def __check_retrospect(date, db, routine_days, routine_id):
     is_exists = db.query(routine_days).scalar()
     if not is_exists:
