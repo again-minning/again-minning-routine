@@ -6,7 +6,7 @@ from base.database.database import Base
 from routine.models.routine import Routine, RoutineDay, RoutineResult
 from retrospect.models.retrospect import Retrospect
 from retrospect.models.snapshot import Snapshot
-
+from config.settings import settings
 models = [Routine, RoutineDay, RoutineResult, Retrospect, Snapshot]
 
 
@@ -21,6 +21,8 @@ def CONNECTION():
 class Connection:
     def __init__(self, ddl_mode: ConnectionMode = ConnectionMode.CREATE):
         self.ddl_mode = ddl_mode
+        if settings.APP_ENV == 'test':
+            self.ddl_mode = ConnectionMode.CREATE
         self.__execute()
 
     def __execute(self):

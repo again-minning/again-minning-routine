@@ -96,11 +96,6 @@ class RoutineResultUpdateRequest(BaseModel):
     result: Result
 
 
-class RoutineDaysResponse(BaseModel):
-    routine_id: int
-    day: Week
-
-
 class RoutineDetailResponse(BaseModel):
     id: int
     title: str
@@ -108,13 +103,13 @@ class RoutineDetailResponse(BaseModel):
     start_time: str
     goal: str
     is_alarm: bool
-    days: List[RoutineDaysResponse]
+    days: List[str]
 
     @classmethod
     def to_response(cls, result):
         res = RoutineDetailResponse(
-            id=result.id, title=result.title, category=result.category, start_time= str(result.start_time),
-            goal=result.goal, is_alarm=result.is_alarm, days=[RoutineDaysResponse(day=days.day, routine_id=days.routine_id) for days in result.days]
+            id=result.id, title=result.title, category=result.category, start_time=str(result.start_time),
+            goal=result.goal, is_alarm=result.is_alarm, days=[days.day for days in result.days]
         )
         return res
 

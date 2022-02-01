@@ -1,11 +1,15 @@
 import freezegun
 from assertpy import assert_that
+from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
 from base.utils.constants import HttpStatus
 from main import app
 from fastapi.testclient import TestClient
 
+from retrospect.models.retrospect import Retrospect
+from retrospect.models.snapshot import Snapshot
+from retrospect.repository.retrospect_repository import put_detail_retrospect
 from routine.constants.week import Week
 from routine.models.routine import Routine
 from routine.repository.routine_repository import create_routine
@@ -30,7 +34,6 @@ def test_회고_정상적으로_생성(db: Session, client: TestClient):
         routine = db.query(Routine).first()
         data = {
             'routine_id': routine.id,
-            'title': '회고생성',
             'content': '그렇게 되었습니다.',
             'date': '2022-01-31'
         }
@@ -64,7 +67,6 @@ def test_회고_중복_체크(db: Session, client: TestClient):
         routine = db.query(Routine).first()
         data = {
             'routine_id': routine.id,
-            'title': '회고생성',
             'content': '그렇게 되었습니다.',
             'date': '2022-01-31'
         }
@@ -79,7 +81,6 @@ def test_회고_중복_체크(db: Session, client: TestClient):
             )
         duplicate_data = {
             'routine_id': routine.id,
-            'title': '회고중복생성',
             'content': '그렇게는 안될겁니다',
             'date': '2022-01-31'
         }
@@ -108,7 +109,6 @@ def test_회고_생성_성공_이미지_파라미터가_없을_때(db: Session, 
         routine = db.query(Routine).first()
         data = {
             'routine_id': routine.id,
-            'title': '회고생성',
             'content': '그렇게 되었습니다.',
             'date': '2022-01-31'
         }
@@ -137,7 +137,6 @@ def test_회고_생성_실패_루틴_정보가_없을_때(db: Session, client: T
         )
         create_routine(db=db, routine=routine_data, account=1)
         data = {
-            'title': '회고생성',
             'content': '그렇게 되었습니다.',
             'date': '2022-01-31'
         }
@@ -151,59 +150,80 @@ def test_회고_생성_실패_루틴_정보가_없을_때(db: Session, client: T
         assert_that(response.status_code).is_equal_to(400)
 
 
-def test_회고_수정할_때_이미지에_대해서():
+@maintain_idempotent
+def test_회고_수정할_때_이미지에_대해서(db: Session, client: TestClient):
     # given
-    """
-    @:parameter: 이미지, 회고 아이디, 유저 아이디
-    :return:
-    """
-    # when
-    """
-    생성일과 현재 시간을 비교해 3일이 지났는 지 확인
-    (토요일에 작성했으면 월요일까지 수정이 가능) 
-    기존 이미지 삭제 및 새 이미지 아이디와 회고 아이디 연결
-    성공 여부 전달
-    """
-    # then
-    """
-    성공 여부 전달
-        {
-        'message' : {
-            'status' : 'RETROSPECT_UPDATE_OK',
-            'msg': '회고 수정에 성공하셨습니다.'
-        },
-        'data': {
-            'success': true
+    with freezegun.freeze_time('2022-02-01'):
+        routine_data = RoutineCreateRequest(
+            title='first', category=1,
+            goal='one', is_alarm=True,
+            start_time='10:00:00',
+            days=[Week.TUE]
+        )
+        create_routine(db=db, routine=routine_data, account=1)
+        routine = db.query(Routine).first()
+        data = {
+            'routine_id': routine.id,
+            'content': '그렇게 되었습니다.',
+            'date': '2022-02-01'
         }
-    }
-    """
+        client.post(
+            f'{retrospect_router_url}',
+            data=data,
+            headers={'account': '1'}
+        )
+
+        retrospect = db.query(Retrospect).first()
+        put_data = {
+            'content': '그렇게 되었습니다.'
+        }
+        filepath = '../resource'
+        # when
+        with open(filepath, 'rb') as f:
+            response = client.put(
+                f'{retrospect_router_url}/{retrospect.id}',
+                data=put_data,
+                files={'image': ('test2', f, 'png')},
+                headers={'account': '1'}
+            )
+        # then
+        result = response.json()
+        message = result['message']
+        assert_that(message['status']).is_equal_to(HttpStatus.RETROSPECT_UPDATE_OK.value)
+        assert_that(message['msg']).is_equal_to(RETROSPECT_UPDATE_MESSAGE)
+        snapshot = db.query(Snapshot).filter(Snapshot.retrospect_id == retrospect.id).first()
+        assert_that(snapshot.url).is_equal_to('test2')
 
 
-def test_회고_수정할_때_글_내용_수정할_때():
+@maintain_idempotent
+def test_회고_수정할_때_글_내용_수정할_때(db: Session, client: TestClient):
     # given
-    """
-    @:parameter: 회고 아이디, 글 내용, 유저 아이디
-    :return:
-    """
-    # when
-    """
-    생성일과 현재 시간을 비교해 3일이 지났는 지 확인
-    (토요일에 작성했으면 월요일까지 수정이 가능) 
-    기존 콘텐츠 날리고 새 콘텐츠로 변경
-    """
-    # then
-    """
-    성공 여부 전달
-            {
-        'message' : {
-            'status' : 'RETROSPECT_UPDATE_OK',
-            'msg': '회고 수정에 성공하셨습니다.'
-        },
-        'data': {
-            'success': true
+    with freezegun.freeze_time('2022-02-01'):
+        routine_data = RoutineCreateRequest(
+            title='first', category=1,
+            goal='one', is_alarm=True,
+            start_time='10:00:00',
+            days=[Week.TUE]
+        )
+        create_routine(db=db, routine=routine_data, account=1)
+        routine = db.query(Routine).first()
+        data = {
+            'routine_id': routine.id,
+            'content': '그렇게 되었습니다.',
+            'date': '2022-02-01'
         }
-    }
-    """
+        client.post(
+            f'{retrospect_router_url}',
+            data=data,
+            headers={'account': '1'}
+        )
+
+        retrospect = db.query(Retrospect).first()
+        filepath = '../resource'
+        with open(filepath, 'rb') as f:
+            put_detail_retrospect(retrospect_id=retrospect.id, content='수정했어요', db=db, image=UploadFile(filename='test.png', file=f))
+            change_retrospect = db.query(Retrospect).filter(Retrospect.id == retrospect.id).first()
+            assert_that(change_retrospect.content).is_equal_to('수정했어요')
 
 
 def test_회고_삭제할_때():
