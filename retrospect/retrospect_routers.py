@@ -18,12 +18,11 @@ router = APIRouter(prefix='/api/v1/retrospects', tags=['retrospects'], dependenc
 @router.post('', response_model=Response[Message, SimpleSuccessResponse])
 def create_retrospect_router(routine_id: int = Form(...),
                              image: Optional[UploadFile] = File(None),
-                             title: str = Form(...),
                              content: str = Form(...),
                              date: str = Form(...),
                              db: Session = Depends(get_db), account: Optional[str] = Header(None)):
     account = int(account)
-    success = create_retrospect(db=db, routine_id=routine_id, title=title, content=content, date=date, image=image, account=account)
+    success = create_retrospect(db=db, routine_id=routine_id, content=content, date=date, image=image, account=account)
     response = Response[Message, SimpleSuccessResponse](
         message=Message(status=HttpStatus.RETROSPECT_CREATE_OK, msg=RETROSPECT_CREATE_MESSAGE),
         data=SimpleSuccessResponse(success=success))
