@@ -98,9 +98,7 @@ class DateUtil:
 
     def return_prev_end_date(self, date):
         delta = date.day
-        return (
-                date - timedelta(days=delta)
-        ).replace(day=self.prev_end_of_month(year=date.year, month=date.month))
+        return (date - timedelta(days=delta)).replace(day=self.prev_end_of_month(year=date.year, month=date.month))
 
     def return_prev_between_date(self, date):
         return self.return_prev_start_date(date), self.return_prev_end_date(date)

@@ -1,7 +1,8 @@
 from typing import Generic, TypeVar, Optional
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 from pydantic.generics import GenericModel
+
 from base.utils.constants import HttpStatus
 
 T = TypeVar('T')

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session, joinedload, contains_eager
 
 from base.exception.exception import MinningException
 from base.utils.time import convert_str2datetime
-from retrospect.constants.retrospect_message import *
+from retrospect.constants.retrospect_message import RETROSPECT_NOT_FOUND_ID, RETROSPECT_NOT_FOUND_ROUTINE_DAYS, RETROSPECT_ALREADY_EXISTS
 from retrospect.models.retrospect import Retrospect
 from routine.constants.week import Week
 from routine.models.routine import Routine

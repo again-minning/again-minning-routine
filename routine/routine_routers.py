@@ -10,7 +10,8 @@ from base.schemas import SimpleSuccessResponse
 from base.utils.constants import HttpStatus
 from base.utils.message import Response, Message
 from base.utils.time import validate_date, check_is_modified_period, convert_str2datetime
-from routine.constants.routine_message import *
+from routine.constants.routine_message import ROUTINE_NO_DATA_RESPONSE, ROUTINE_GET_MESSAGE, ROUTINE_CREATE_MESSAGE, ROUTINE_RESULTS_UPDATE_MESSAGE, ROUTINE_UPDATE_MESSAGE, \
+    ROUTINE_RESULT_CANCEL_MESSAGE, ROUTINE_DELETE_RESPONSE, ROUTINE_SEQUENCE_CHANGE_RESPONSE
 from routine.repository.routine_repository import create_routine, get_routine_list, update_or_create_routine_result, get_routine_detail, patch_routine_detail, cancel_routine_results, delete_routine, \
     change_routine_sequence
 from routine.schemas import RoutineCreateRequest, RoutineElementResponse, RoutineResultUpdateRequest, RoutineDetailResponse, RoutineSequenceRequest

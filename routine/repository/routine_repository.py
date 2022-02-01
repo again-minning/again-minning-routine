@@ -22,7 +22,7 @@ def get_routine_list(db: Session, account_id: int, today: str):
     routines = db.query(Routine).join(RoutineDay).filter(
         and_(
             Routine.account_id == account_id,
-            Routine.is_delete == False,
+            Routine.is_delete.is_(False),
             RoutineDay.day == weekday
         )
     ).options(load_only(*fields), joinedload(Routine.routine_results)).all()
