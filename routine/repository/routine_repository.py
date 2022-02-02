@@ -90,8 +90,8 @@ def patch_routine_detail(db: Session, request: RoutineCreateRequest, routine_id:
         Routine
     ).filter(
         and_(
-            Routine.id == routine_id,
-            Routine.account_id == account
+            Routine.id.is_(routine_id),
+            Routine.account_id.is_(account)
         )
     ).first()
 
