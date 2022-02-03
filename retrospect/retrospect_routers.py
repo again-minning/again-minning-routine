@@ -50,3 +50,12 @@ def put_detail_retrospect_router(retrospect_id: int,
         message=Message(status=HttpStatus.RETROSPECT_UPDATE_OK, msg=RETROSPECT_UPDATE_MESSAGE),
         data=SimpleSuccessResponse(success=success))
     return response
+
+
+@router.delete('/{retrospect_id}', response_model=Response[Message, SimpleSuccessResponse])
+def delete_detail_retrospect_router(retrospect_id: int, db: Session = Depends(get_db)):
+    success = delete_detail_retrospect(db=db, retrospect_id=retrospect_id)
+    response = Response[Message, SimpleSuccessResponse](
+        message=Message(status=HttpStatus.RETROSPECT_DELETE_OK, msg=RETROSPECT_DELETE_MESSAGE),
+        data=SimpleSuccessResponse(success=success))
+    return response

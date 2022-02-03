@@ -73,17 +73,6 @@ def put_detail_retrospect(retrospect_id: int, content: str, image: UploadFile, d
     return True
 
 
-def __check_retrospect(date, db, routine_days, routine_id):
-    if not routine_days:
-        raise MinningException(RETROSPECT_NOT_FOUND_ROUTINE_DAYS)
-    scheduled_retrospect = db.query(
-        Retrospect
-    ).filter(
-        and_(
-            Retrospect.scheduled_date.is_(date),
-            Retrospect.routine_id.is_(routine_id)
-        )
-    ).exists()
-    is_exists_retrospects = db.query(scheduled_retrospect).scalar()
-    if is_exists_retrospects:
-        raise MinningException(RETROSPECT_ALREADY_EXISTS)
+def delete_detail_retrospect(retrospect_id: int, db: Session):
+    db.query(Retrospect).filter(Retrospect.id.is_(retrospect_id)).delete()
+    return True
