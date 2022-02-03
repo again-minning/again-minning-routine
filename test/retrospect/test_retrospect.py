@@ -15,7 +15,7 @@ from routine.models.routine import Routine
 from routine.repository.routine_repository import create_routine
 from routine.schemas import RoutineCreateRequest
 from test.conftest import maintain_idempotent
-from retrospect.constants.retrospect_message import RETROSPECT_CREATE_MESSAGE, RETROSPECT_ALREADY_EXISTS, RETROSPECT_UPDATE_MESSAGE
+from retrospect.constants.retrospect_message import RETROSPECT_CREATE_MESSAGE, RETROSPECT_ALREADY_EXISTS, RETROSPECT_UPDATE_MESSAGE, RETROSPECT_DELETE_MESSAGE
 
 client = TestClient(app)
 retrospect_router_url = '/api/v1/retrospects'
@@ -227,36 +227,79 @@ def test_회고_수정할_때_글_내용_수정할_때(db: Session, client: Test
             assert_that(change_retrospect.content).is_equal_to('수정했어요')
 
 
-def test_회고_삭제할_때():
+@maintain_idempotent
+def test_회고_삭제할_때(db: Session, client: TestClient):
     # given
-    """
-    @:parameter: 회고 아이디, 유저 아이디
-    :return:
-    """
-    # when
-    """
-    삭제 진행
-    삭제 진행할 때 회고 내용만 삭제되고 이에 대한 수행 여부는 존재해야 한다.
-    """
-    # then
-    """
-    성공 여부 전달
-            {
-        'message' : {
-            'status' : 'RETROSPECT_DELETE_OK',
-            'msg': '회고 삭제에 성공하셨습니다.'
-        },
-        'data': {
-            'success': true
+    with freezegun.freeze_time('2022-02-03'):
+        routine_data = RoutineCreateRequest(
+            title='first', category=1,
+            goal='one', is_alarm=True,
+            start_time='10:00:00',
+            days=[Week.THU]
+        )
+        create_routine(db=db, routine=routine_data, account=1)
+        routine = db.query(Routine).first()
+        data = {
+            'routine_id': routine.id,
+            'content': '그렇게 되었습니다.',
+            'date': '2022-02-03'
         }
-    }
-    """
+        client.post(
+            f'{retrospect_router_url}',
+            data=data,
+            headers={'account': '1'}
+        )
+        # when
+        retrospect = db.query(Retrospect).first()
+        response = client.delete(
+            f'{retrospect_router_url}/{retrospect.id}',
+            headers={'account': '1'}
+        )
+        # then
+        message = response.json()['message']
+        assert_that(response.status_code).is_equal_to(200)
+        assert_that(message['status']).is_equal_to(HttpStatus.RETROSPECT_DELETE_OK.value)
+        assert_that(message['msg']).is_equal_to(RETROSPECT_DELETE_MESSAGE)
+
+
+@maintain_idempotent
+def test_디테일_회고_조회(db: Session, client: TestClient):
+    # given
+    with freezegun.freeze_time('2022-02-03'):
+        routine_data = RoutineCreateRequest(
+            title='first', category=1,
+            goal='one', is_alarm=True,
+            start_time='10:00:00',
+            days=[Week.THU]
+        )
+        create_routine(db=db, routine=routine_data, account=1)
+        routine = db.query(Routine).first()
+        data = {
+            'routine_id': routine.id,
+            'content': '그렇게 되었습니다.',
+            'date': '2022-02-03'
+        }
+        client.post(
+            f'{retrospect_router_url}',
+            data=data,
+            headers={'account': '1'}
+        )
+        # when
+        retrospect = db.query(Retrospect).first()
+        response = client.get(
+            f'{retrospect_router_url}/{retrospect.id}',
+            headers={'account': '1'}
+        )
+        body = response.json()['data']
+        assert_that(body['id']).is_equal_to(retrospect.id)
+        assert_that(body['title']).is_equal_to(retrospect.title)
+        assert_that(body['content']).is_equal_to(retrospect.content)
 
 
 def test_당일_해야하는_회고_리스트_조회():
     # given
     """
-    @:param: account_id, 요일
+    @:param: account, 요일
     :return:
     """
     # when

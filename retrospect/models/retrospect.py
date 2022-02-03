@@ -7,9 +7,10 @@ from retrospect.models.snapshot import Snapshot
 
 
 class Retrospect(BaseColumnMixin, TimestampMixin, Base):
-    def __init__(self, routine_id: int, title: str, content: str, scheduled_date):
+    def __init__(self, routine_id: int, account_id: int, title: str, content: str, scheduled_date):
         super().__init__()
         self.routine_id = routine_id
+        self.account_id = account_id
         self.title = title
         self.content = content
         self.scheduled_date = scheduled_date
@@ -17,6 +18,8 @@ class Retrospect(BaseColumnMixin, TimestampMixin, Base):
     __tablename__ = 'retrospects'
 
     id = Column('retrospect_id', Integer, primary_key=True, index=True)
+
+    account_id = Column(Integer, index=True, nullable=False)
 
     # OneToOne
     image = relationship('Snapshot', back_populates='retrospect', uselist=False)

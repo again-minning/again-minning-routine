@@ -8,8 +8,8 @@ from base.dependencies.header import check_account_header
 from base.schemas import SimpleSuccessResponse
 from base.utils.constants import HttpStatus
 from base.utils.message import Response, Message
-from retrospect.repository.retrospect_repository import create_retrospect, get_detail_retrospect, put_detail_retrospect
-from retrospect.constants.retrospect_message import RETROSPECT_CREATE_MESSAGE, RETROSPECT_DETAIL_MESSAGE, RETROSPECT_UPDATE_MESSAGE
+from retrospect.repository.retrospect_repository import create_retrospect, get_detail_retrospect, put_detail_retrospect, delete_detail_retrospect
+from retrospect.constants.retrospect_message import RETROSPECT_CREATE_MESSAGE, RETROSPECT_DETAIL_MESSAGE, RETROSPECT_UPDATE_MESSAGE, RETROSPECT_DELETE_MESSAGE
 from retrospect.schemas import DetailRetrospectSchema
 
 router = APIRouter(prefix='/api/v1/retrospects', tags=['retrospects'], dependencies=[Depends(check_account_header)])
@@ -48,5 +48,14 @@ def put_detail_retrospect_router(retrospect_id: int,
     success = put_detail_retrospect(retrospect_id=retrospect_id, content=content, image=image, db=db)
     response = Response[Message, SimpleSuccessResponse](
         message=Message(status=HttpStatus.RETROSPECT_UPDATE_OK, msg=RETROSPECT_UPDATE_MESSAGE),
+        data=SimpleSuccessResponse(success=success))
+    return response
+
+
+@router.delete('/{retrospect_id}', response_model=Response[Message, SimpleSuccessResponse])
+def delete_detail_retrospect_router(retrospect_id: int, db: Session = Depends(get_db)):
+    success = delete_detail_retrospect(db=db, retrospect_id=retrospect_id)
+    response = Response[Message, SimpleSuccessResponse](
+        message=Message(status=HttpStatus.RETROSPECT_DELETE_OK, msg=RETROSPECT_DELETE_MESSAGE),
         data=SimpleSuccessResponse(success=success))
     return response
