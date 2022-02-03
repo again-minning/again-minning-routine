@@ -32,12 +32,28 @@ def create_retrospect(db: Session, routine_id: int, content: str, date: str, ima
     __check_retrospect(date, db, routine_with_days, routine_id)
 
     title = routine_with_days.routine.title
-    retrospect: Retrospect = Retrospect(routine_id=routine_id, title=title, content=content, scheduled_date=date)
+    retrospect: Retrospect = Retrospect(routine_id=routine_id, account_id=account, title=title, content=content, scheduled_date=date)
     if image:
         retrospect.add_image(url=image.filename)
     db.add(retrospect)
     db.commit()
     return True
+
+
+def __check_retrospect(date, db, routine_days, routine_id):
+    if not routine_days:
+        raise MinningException(RETROSPECT_NOT_FOUND_ROUTINE_DAYS)
+    scheduled_retrospect = db.query(
+        Retrospect
+    ).filter(
+        and_(
+            Retrospect.scheduled_date.is_(date),
+            Retrospect.routine_id.is_(routine_id)
+        )
+    ).exists()
+    is_exists_retrospects = db.query(scheduled_retrospect).scalar()
+    if is_exists_retrospects:
+        raise MinningException(RETROSPECT_ALREADY_EXISTS)
 
 
 def get_detail_retrospect(db: Session, retrospect_id: int):
