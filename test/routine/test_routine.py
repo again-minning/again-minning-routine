@@ -6,6 +6,8 @@ from assertpy import assert_that
 from sqlalchemy import desc, and_
 from sqlalchemy.orm import Session
 from starlette.testclient import TestClient
+
+from base.constants.base_message import USER_INFO_NOT_EQUAL
 from test.utils import get_now_date
 from base.utils.constants import HttpStatus
 from base.utils.time import get_now, convert_str2datetime, convert_str2date
@@ -16,7 +18,7 @@ from routine.constants.week import Week
 from routine.models.routine import Routine
 from routine.models.routineDay import RoutineDay
 from routine.models.routineResult import RoutineResult
-from routine.repository.routine_repository import patch_routine_detail, update_or_create_routine_result, create_routine
+from routine.service.routine_service import patch_routine_detail, update_or_create_routine_result, create_routine
 from routine.schemas import RoutineCreateRequest, RoutineResultUpdateRequest
 from test.conftest import maintain_idempotent
 
