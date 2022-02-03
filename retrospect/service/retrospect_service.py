@@ -56,13 +56,14 @@ def __check_retrospect(date, db, routine_days, routine_id):
         raise MinningException(RETROSPECT_ALREADY_EXISTS)
 
 
-def get_detail_retrospect(db: Session, retrospect_id: int):
+def get_detail_retrospect(db: Session, retrospect_id: int, account: int):
     retrospect = db.query(
         Retrospect
     ).options(
         joinedload(Retrospect.image)
     ).filter(
-        Retrospect.id.is_(retrospect_id)
+        Retrospect.id.is_(retrospect_id),
+        Retrospect.account_id.is_(account)
     ).first()
 
     if not retrospect:
@@ -70,15 +71,17 @@ def get_detail_retrospect(db: Session, retrospect_id: int):
     return retrospect
 
 
-def put_detail_retrospect(retrospect_id: int, content: str, image: UploadFile, db: Session):
+def put_detail_retrospect(retrospect_id: int, content: str, image: UploadFile, db: Session, account: int):
     retrospect = db.query(
         Retrospect
     ).options(
         joinedload(Retrospect.image)
     ).filter(
-        Retrospect.id.is_(retrospect_id)
+        Retrospect.id.is_(retrospect_id),
+        Retrospect.account_id.is_(account)
     ).first()
-
+    if not retrospect:
+        raise MinningException(RETROSPECT_NOT_FOUND_ID)
     retrospect.content = content
     if retrospect.image:
         retrospect.image.url = image.filename
@@ -89,6 +92,17 @@ def put_detail_retrospect(retrospect_id: int, content: str, image: UploadFile, d
     return True
 
 
-def delete_detail_retrospect(retrospect_id: int, db: Session):
-    db.query(Retrospect).filter(Retrospect.id.is_(retrospect_id)).delete()
+def delete_detail_retrospect(retrospect_id: int, db: Session, account: int):
+    retrospect = db.query(
+        Retrospect
+    ).filter(
+        and_(
+            Retrospect.id.is_(retrospect_id),
+            Retrospect.account_id.is_(account)
+        )
+    ).first()
+    if not retrospect:
+        raise MinningException(RETROSPECT_NOT_FOUND_ID)
+    db.delete(retrospect)
+    db.commit()
     return True

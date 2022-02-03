@@ -53,8 +53,8 @@ def update_routine_result_router(routine_id: int, date: str, request: RoutineRes
 
 
 @router.get('/{routine_id}', response_model=Response[Message, RoutineDetailResponse])
-def get_routine_detail_router(routine_id: int, db: Session = Depends(get_db)):
-    result = get_routine_detail(db=db, routine_id=routine_id)
+def get_routine_detail_router(routine_id: int, db: Session = Depends(get_db), account: Optional[str] = Header(None)):
+    result = get_routine_detail(db=db, routine_id=routine_id, account=int(account))
     if result is None:
         raise MinningException(name=ROUTINE_NO_DATA_RESPONSE)
     response = Response[Message, RoutineDetailResponse](
@@ -75,9 +75,9 @@ def patch_routine_detail_router(routine_id: int, request: RoutineCreateRequest, 
 
 
 @router.patch('/cancel/{routine_id}', response_model=Response[Message, SimpleSuccessResponse])
-def cancel_routine_results_router(routine_id: int, date: str, db: Session = Depends(get_db)):
+def cancel_routine_results_router(routine_id: int, date: str, db: Session = Depends(get_db), account: Optional[str] = Header(None)):
     validate_date(date)
-    success = cancel_routine_results(routine_id=routine_id, date=date, db=db)
+    success = cancel_routine_results(routine_id=routine_id, date=date, db=db, account=int(account))
     response = Response[Message, SimpleSuccessResponse](
         message=Message(status=HttpStatus.ROUTINE_PATCH_OK, msg=ROUTINE_RESULT_CANCEL_MESSAGE),
         data=SimpleSuccessResponse(success=success)
@@ -86,8 +86,8 @@ def cancel_routine_results_router(routine_id: int, date: str, db: Session = Depe
 
 
 @router.delete('/{routine_id}', response_model=Response[Message, SimpleSuccessResponse])
-def delete_routine_router(routine_id: int, db: Session = Depends(get_db)):
-    success = delete_routine(routine_id=routine_id, db=db)
+def delete_routine_router(routine_id: int, db: Session = Depends(get_db), account: Optional[str] = Header(None)):
+    success = delete_routine(routine_id=routine_id, db=db, account=int(account))
     response = Response[Message, SimpleSuccessResponse](
         message=Message(status=HttpStatus.ROUTINE_DELETE_OK, msg=ROUTINE_DELETE_RESPONSE),
         data=SimpleSuccessResponse(success=success)

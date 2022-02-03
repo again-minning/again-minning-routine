@@ -73,12 +73,15 @@ def update_or_create_routine_result(db: Session, routine_id: int, date: str, req
     return True
 
 
-def get_routine_detail(db: Session, routine_id: int):
+def get_routine_detail(db: Session, routine_id: int, account: int):
     fields = ['title', 'category', 'start_time', 'goal', 'is_alarm']
     return db.query(
         Routine
     ).filter(
-        Routine.id.is_(routine_id)
+        and_(
+            Routine.id.is_(routine_id),
+            Routine.account_id.is_(account)
+        )
     ).options(
         subqueryload('days').load_only('day'),
         load_only(*fields)
@@ -104,10 +107,16 @@ def patch_routine_detail(db: Session, request: RoutineCreateRequest, routine_id:
     return True
 
 
-def cancel_routine_results(db: Session, routine_id: int, date: str):
+def cancel_routine_results(db: Session, routine_id: int, date: str, account: int):
     date = convert_str2datetime(date)
 
-    routine_result: RoutineResult = db.query(RoutineResult).filter(
+    routine_result: RoutineResult = db.query(
+        RoutineResult
+    ).join(
+        RoutineResult.routine
+    ).options(
+        contains_eager(RoutineResult.routine)
+    ).filter(
         and_(
             RoutineResult.routine_id.is_(routine_id),
             RoutineResult.yymmdd.is_(date)
@@ -115,13 +124,22 @@ def cancel_routine_results(db: Session, routine_id: int, date: str):
     ).first()
     if routine_result is None:
         raise MinningException(name=ROUTINE_NO_DATA_RESPONSE)
+    if routine_result.routine.account_id != account:
+        raise MinningException(name=USER_INFO_NOT_EQUAL)
     routine_result.result = Result.NOT
     db.commit()
     return True
 
 
-def delete_routine(db: Session, routine_id: int):
-    db.query(Routine).filter(Routine.id.is_(routine_id)).delete()
+def delete_routine(db: Session, routine_id: int, account: int):
+    db.query(
+        Routine
+    ).filter(
+        and_(
+            Routine.id.is_(routine_id),
+            Routine.account_id.is_(account)
+        )
+    ).delete()
     db.commit()
     return True
 

@@ -296,6 +296,105 @@ def test_디테일_회고_조회(db: Session, client: TestClient):
         assert_that(body['content']).is_equal_to(retrospect.content)
 
 
+@maintain_idempotent
+def test_가져오는데_유저아이디가_틀릴_때(db: Session, client: TestClient):
+    # given
+    with freezegun.freeze_time('2022-02-04'):
+        routine_data = RoutineCreateRequest(
+            title='first', category=1,
+            goal='one', is_alarm=True,
+            start_time='10:00:00',
+            days=[Week.FRI]
+        )
+        create_routine(db=db, routine=routine_data, account=1)
+        routine = db.query(Routine).first()
+        data = {
+            'routine_id': routine.id,
+            'content': '그렇게 되었습니다.',
+            'date': '2022-02-04'
+        }
+        client.post(
+            f'{retrospect_router_url}',
+            data=data,
+            headers={'account': '1'}
+        )
+        # when
+        retrospect = db.query(Retrospect).first()
+        response = client.get(
+            f'{retrospect_router_url}/{retrospect.id}',
+            headers={'account': '2'}
+        )
+        assert_that(response.status_code).is_equal_to(400)
+        assert_that(response.json()['body']).is_equal_to(RETROSPECT_NOT_FOUND_ID)
+
+
+@maintain_idempotent
+def test_회고_수정하는데_유저아이디가_틀릴_때(db: Session, client: TestClient):
+    # given
+    with freezegun.freeze_time('2022-02-04'):
+        routine_data = RoutineCreateRequest(
+            title='first', category=1,
+            goal='one', is_alarm=True,
+            start_time='10:00:00',
+            days=[Week.FRI]
+        )
+        create_routine(db=db, routine=routine_data, account=1)
+        routine = db.query(Routine).first()
+        data = {
+            'routine_id': routine.id,
+            'content': '그렇게 되었습니다.',
+            'date': '2022-02-04'
+        }
+        client.post(
+            f'{retrospect_router_url}',
+            data=data,
+            headers={'account': '1'}
+        )
+
+        retrospect = db.query(Retrospect).first()
+        put_data = {
+            'content': '그렇게 되었습니다.'
+        }
+        filepath = './resource/test2.png'
+        # when
+        with open(filepath, 'rb') as f:
+            response = client.put(
+                f'{retrospect_router_url}/{retrospect.id}',
+                data=put_data,
+                files={'image': ('test2', f, 'png')},
+                headers={'account': '2'}
+            )
+        assert_that(response.status_code).is_equal_to(400)
+        assert_that(response.json()['body']).is_equal_to(RETROSPECT_NOT_FOUND_ID)
+
+
+@maintain_idempotent
+def test_회고_삭제할_때_유저아이디_불일치(db: Session, client: TestClient):
+    # given
+    with freezegun.freeze_time('2022-02-04'):
+        routine_data = RoutineCreateRequest(
+            title='first', category=1,
+            goal='one', is_alarm=True,
+            start_time='10:00:00',
+            days=[Week.FRI]
+        )
+        create_routine(db=db, routine=routine_data, account=1)
+        routine = db.query(Routine).first()
+        data = {
+            'routine_id': routine.id,
+            'content': '그렇게 되었습니다.',
+            'date': '2022-02-04'
+        }
+        client.post(
+            f'{retrospect_router_url}',
+            data=data,
+            headers={'account': '1'}
+        )
+
+        retrospect = db.query(Retrospect).first()
+        assert_that(delete_detail_retrospect).raises(MinningException).when_called_with(retrospect_id=retrospect.id, db=db, account=2)
+
+
 def test_당일_해야하는_회고_리스트_조회():
     # given
     """

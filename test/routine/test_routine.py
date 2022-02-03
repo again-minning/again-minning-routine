@@ -545,6 +545,35 @@ def test_루틴_수행여부_취소(db: Session, client: TestClient):
 
 
 @maintain_idempotent
+def test_루틴_수행여부_취소하는데_유저아이디_불일치(db: Session, client: TestClient):
+    # given
+    routine_data = RoutineCreateRequest(
+        title='time_test', category=1,
+        goal='daily', is_alarm=True,
+        start_time='10:00:00',
+        days=[Week.MON, Week.TUE, Week.WED, Week.THU, Week.FRI, Week.SAT, Week.SUN]
+    )
+    create_routine(db=db, routine=routine_data, account=1)
+    # when
+    routine = db.query(Routine).first()
+    now = str(get_now())
+    day = str(convert_str2date(now))
+    date = convert_str2datetime(day)
+
+    update_or_create_routine_result(db=db, routine_id=routine.id, date=date.strftime("%Y-%m-%d"), reqeust=RoutineResultUpdateRequest(result=Result.DONE))
+    routine_result: RoutineResult = db.query(RoutineResult).first()
+    assert_that(routine_result.result).is_equal_to(Result.DONE)
+
+    response = client.patch(
+        f'{routines_router_url}/cancel/{routine.id}?date={date.strftime("%Y-%m-%d")}',
+        headers={'account': '2'}
+    )
+    assert_that(response.status_code).is_equal_to(400)
+    result = response.json()
+    assert_that(result['body']).is_equal_to(USER_INFO_NOT_EQUAL)
+
+
+@maintain_idempotent
 def test_존재하지_않는_아이디_조회했을_때(db: Session, client: TestClient):
     response = client.get(
         f'{routines_router_url}/123',
@@ -684,3 +713,23 @@ def test_루틴_순서_변경(db: Session, client: TestClient):
         assert_that(response.status_code).is_equal_to(200)
         routine_id_and_sequences = db.query(RoutineDay.routine_id, RoutineDay.sequence).all()
         assert_that(sorted(routine_id_and_sequences)).is_equal_to([(1, 2), (2, 1)])
+
+
+@maintain_idempotent
+def test_루틴디테일_유저아이디가_일치하지_않을_때(db: Session, client: TestClient):
+    routine_data = RoutineCreateRequest(
+        title='첫째', category=1,
+        goal='daily', is_alarm=True,
+        start_time='10:00:00',
+        days=[Week.SUN]
+    )
+    create_routine(db=db, routine=routine_data, account=1)
+    routine = db.query(Routine).first()
+    response = client.get(
+        f'{routines_router_url}/{routine.id}',
+        headers={'account': '2'}
+    )
+    assert_that(response.status_code).is_equal_to(400)
+    result = response.json()
+    message = result['body']
+    assert_that(message).is_equal_to(ROUTINE_NO_DATA_RESPONSE)
