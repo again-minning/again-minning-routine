@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Enum, Time, Boolean
+from sqlalchemy import Column, Integer, String, Enum, Time, Boolean, Index
 from sqlalchemy.orm import relationship, Session
 
 from base.database.database import Base
@@ -25,7 +25,9 @@ class Routine(BaseColumnMixin, TimestampMixin, Base):
 
     __tablename__ = 'routine'
 
-    id = Column('routine_id', Integer, primary_key=True, index=True)
+    __table_args__ = (Index('ix_routines_id_account_id', 'routine_id', 'account_id'),)
+
+    id = Column('routine_id', Integer, primary_key=True)
 
     account_id = Column(Integer, index=True, nullable=False)
 
