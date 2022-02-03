@@ -12,7 +12,7 @@ class Snapshot(BaseColumnMixin, TimestampMixin, Base):
 
     __tablename__ = 'snapshots'
 
-    snapshot_id = Column(Integer, primary_key=True, index=True)
+    snapshot_id = Column(Integer, primary_key=True)
 
     retrospect = relationship('Retrospect', back_populates='image')
 
