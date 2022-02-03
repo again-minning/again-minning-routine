@@ -8,7 +8,7 @@ from base.dependencies.header import check_account_header
 from base.schemas import SimpleSuccessResponse
 from base.utils.constants import HttpStatus
 from base.utils.message import Response, Message
-from retrospect.repository.retrospect_repository import create_retrospect, get_detail_retrospect, put_detail_retrospect, delete_detail_retrospect
+from retrospect.service.retrospect_service import create_retrospect, get_detail_retrospect, put_detail_retrospect, delete_detail_retrospect
 from retrospect.constants.retrospect_message import RETROSPECT_CREATE_MESSAGE, RETROSPECT_DETAIL_MESSAGE, RETROSPECT_UPDATE_MESSAGE, RETROSPECT_DELETE_MESSAGE
 from retrospect.schemas import DetailRetrospectSchema
 
