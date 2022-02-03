@@ -299,7 +299,7 @@ def test_디테일_회고_조회(db: Session, client: TestClient):
 def test_당일_해야하는_회고_리스트_조회():
     # given
     """
-    @:param: account_id, 요일
+    @:param: account, 요일
     :return:
     """
     # when
