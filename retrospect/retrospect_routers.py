@@ -8,7 +8,7 @@ from base.dependencies.header import check_account_header
 from base.schemas import SimpleSuccessResponse
 from base.utils.constants import HttpStatus
 from base.utils.message import Response, Message
-from retrospect.repository.retrospect_repository import create_retrospect, get_detail_retrospect, put_detail_retrospect, delete_detail_retrospect
+from retrospect.service.retrospect_service import create_retrospect, get_detail_retrospect, put_detail_retrospect, delete_detail_retrospect
 from retrospect.constants.retrospect_message import RETROSPECT_CREATE_MESSAGE, RETROSPECT_DETAIL_MESSAGE, RETROSPECT_UPDATE_MESSAGE, RETROSPECT_DELETE_MESSAGE
 from retrospect.schemas import DetailRetrospectSchema
 
@@ -21,8 +21,7 @@ def create_retrospect_router(routine_id: int = Form(...),
                              content: str = Form(...),
                              date: str = Form(...),
                              db: Session = Depends(get_db), account: Optional[str] = Header(None)):
-    account = int(account)
-    success = create_retrospect(db=db, routine_id=routine_id, content=content, date=date, image=image, account=account)
+    success = create_retrospect(db=db, routine_id=routine_id, content=content, date=date, image=image, account=int(account))
     response = Response[Message, SimpleSuccessResponse](
         message=Message(status=HttpStatus.RETROSPECT_CREATE_OK, msg=RETROSPECT_CREATE_MESSAGE),
         data=SimpleSuccessResponse(success=success))
@@ -30,8 +29,8 @@ def create_retrospect_router(routine_id: int = Form(...),
 
 
 @router.get('/{retrospect_id}', response_model=Response[Message, DetailRetrospectSchema])
-def get_detail_retrospect_router(retrospect_id: int, db: Session = Depends(get_db)):
-    retrospect = get_detail_retrospect(db=db, retrospect_id=retrospect_id)
+def get_detail_retrospect_router(retrospect_id: int, db: Session = Depends(get_db), account: Optional[str] = Header(None)):
+    retrospect = get_detail_retrospect(db=db, retrospect_id=retrospect_id, account=int(account))
 
     response = Response[Message, DetailRetrospectSchema](
         message=Message(status=HttpStatus.RETROSPECT_DETAIL_OK, msg=RETROSPECT_DETAIL_MESSAGE),
@@ -44,8 +43,8 @@ def get_detail_retrospect_router(retrospect_id: int, db: Session = Depends(get_d
 def put_detail_retrospect_router(retrospect_id: int,
                                  content: str = Form(...),
                                  image: Optional[UploadFile] = File(None),
-                                 db: Session = Depends(get_db)):
-    success = put_detail_retrospect(retrospect_id=retrospect_id, content=content, image=image, db=db)
+                                 db: Session = Depends(get_db), account: Optional[str] = Header(None)):
+    success = put_detail_retrospect(retrospect_id=retrospect_id, content=content, image=image, db=db, account=int(account))
     response = Response[Message, SimpleSuccessResponse](
         message=Message(status=HttpStatus.RETROSPECT_UPDATE_OK, msg=RETROSPECT_UPDATE_MESSAGE),
         data=SimpleSuccessResponse(success=success))
@@ -53,8 +52,8 @@ def put_detail_retrospect_router(retrospect_id: int,
 
 
 @router.delete('/{retrospect_id}', response_model=Response[Message, SimpleSuccessResponse])
-def delete_detail_retrospect_router(retrospect_id: int, db: Session = Depends(get_db)):
-    success = delete_detail_retrospect(db=db, retrospect_id=retrospect_id)
+def delete_detail_retrospect_router(retrospect_id: int, db: Session = Depends(get_db), account: Optional[str] = Header(None)):
+    success = delete_detail_retrospect(db=db, retrospect_id=retrospect_id, account=int(account))
     response = Response[Message, SimpleSuccessResponse](
         message=Message(status=HttpStatus.RETROSPECT_DELETE_OK, msg=RETROSPECT_DELETE_MESSAGE),
         data=SimpleSuccessResponse(success=success))

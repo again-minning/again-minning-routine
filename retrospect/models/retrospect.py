@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Index
 from sqlalchemy.orm import relationship
 
 from base.database.database import Base
@@ -17,9 +17,11 @@ class Retrospect(BaseColumnMixin, TimestampMixin, Base):
 
     __tablename__ = 'retrospects'
 
-    id = Column('retrospect_id', Integer, primary_key=True, index=True)
+    __table_args__ = (Index('ix_retrospects_id_account_id', 'account_id', 'retrospect_id'),)
 
-    account_id = Column(Integer, index=True, nullable=False)
+    id = Column('retrospect_id', Integer, primary_key=True)
+
+    account_id = Column(Integer, nullable=False)
 
     # OneToOne
     image = relationship('Snapshot', back_populates='retrospect', uselist=False)

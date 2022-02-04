@@ -16,7 +16,7 @@ class RoutineResult(BaseColumnMixin, TimestampMixin, Base):
 
     __tablename__ = 'routine_result'
 
-    id = Column('routine_result_id', Integer, primary_key=True, index=True)
+    id = Column('routine_result_id', Integer, primary_key=True)
 
     routine_id = Column(Integer, ForeignKey('routine.routine_id', ondelete='CASCADE'))
 
