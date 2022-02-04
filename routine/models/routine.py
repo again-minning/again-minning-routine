@@ -25,11 +25,11 @@ class Routine(BaseColumnMixin, TimestampMixin, Base):
 
     __tablename__ = 'routine'
 
-    __table_args__ = (Index('ix_routines_id_account_id', 'routine_id', 'account_id'),)
+    __table_args__ = (Index('ix_routines_id_account_id', 'account_id', 'routine_id'),)
 
     id = Column('routine_id', Integer, primary_key=True)
 
-    account_id = Column(Integer, index=True, nullable=False)
+    account_id = Column(Integer, nullable=False)
 
     routine_results = relationship('RoutineResult', back_populates='routine', cascade='all, delete-orphan')
 

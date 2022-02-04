@@ -17,11 +17,11 @@ class Retrospect(BaseColumnMixin, TimestampMixin, Base):
 
     __tablename__ = 'retrospects'
 
-    __table_args__ = (Index('ix_retrospects_id_account_id', 'retrospect_id', 'account_id'),)
+    __table_args__ = (Index('ix_retrospects_id_account_id', 'account_id', 'retrospect_id'),)
 
     id = Column('retrospect_id', Integer, primary_key=True)
 
-    account_id = Column(Integer, index=True, nullable=False)
+    account_id = Column(Integer, nullable=False)
 
     # OneToOne
     image = relationship('Snapshot', back_populates='retrospect', uselist=False)
