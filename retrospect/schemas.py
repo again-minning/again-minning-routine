@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class DetailRetrospectSchema(BaseModel):
+class RetrospectResponseSchema(BaseModel):
     id: int
     title: str
     content: str
@@ -9,9 +9,16 @@ class DetailRetrospectSchema(BaseModel):
 
     @classmethod
     def to_response(cls, retrospect):
-        return DetailRetrospectSchema(
+        return RetrospectResponseSchema(
             id=retrospect.id,
             title=retrospect.title,
             content=retrospect.content,
             url=retrospect.image.url if retrospect.image else ''
         )
+
+    @classmethod
+    def to_list_response(cls, retrospects):
+        result = []
+        for retrospect in retrospects:
+            result.append(RetrospectResponseSchema.to_response(retrospect))
+        return result

@@ -58,3 +58,14 @@ def delete_detail_retrospect_router(retrospect_id: int, db: Session = Depends(ge
         message=Message(status=HttpStatus.RETROSPECT_DELETE_OK, msg=RETROSPECT_DELETE_MESSAGE),
         data=SimpleSuccessResponse(success=success))
     return response
+
+
+@router.get('', response_model=Response[Message, Optional[List[RetrospectResponseSchema]]])
+def get_list_retrospect_router(date: str, db: Session = Depends(get_db), account: Optional[str] = Header(None)):
+    validate_date(date)
+    retrospects = get_list_retrospect(date=date, db=db, account_id=int(account))
+    response = Response(
+        message=Message(status=HttpStatus.RETROSPECT_LIST_OK, msg=RETROSPECT_LIST_MESSAGE),
+        data=RetrospectResponseSchema.to_list_response(retrospects=retrospects)
+    )
+    return response

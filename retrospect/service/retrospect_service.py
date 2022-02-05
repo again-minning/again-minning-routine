@@ -1,6 +1,6 @@
 from fastapi import UploadFile
 from sqlalchemy import and_
-from sqlalchemy.orm import Session, joinedload, contains_eager
+from sqlalchemy.orm import Session, joinedload, contains_eager, load_only
 
 from base.exception.exception import MinningException
 from base.utils.time import convert_str2datetime
@@ -106,3 +106,23 @@ def delete_detail_retrospect(retrospect_id: int, db: Session, account: int):
     db.delete(retrospect)
     db.commit()
     return True
+
+
+def get_list_retrospect(date: str, db: Session, account_id: int):
+    date = convert_str2datetime(date)
+    fields = ['id', 'routine_id', 'title', 'content']
+    result = db.query(
+        Retrospect
+    ).options(
+        joinedload(Retrospect.image)
+    ).filter(
+        and_(
+            Retrospect.account_id == account_id,
+            Retrospect.scheduled_date == date
+        )
+    ).options(
+      load_only(*fields)
+    ).order_by(
+        Retrospect.created_at.desc()
+    ).all()
+    return result

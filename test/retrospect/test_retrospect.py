@@ -396,38 +396,46 @@ def test_회고_삭제할_때_유저아이디_불일치(db: Session, client: Tes
         assert_that(delete_detail_retrospect).raises(MinningException).when_called_with(retrospect_id=retrospect.id, db=db, account=2)
 
 
-def test_당일_해야하는_회고_리스트_조회():
+@maintain_idempotent
+def test_당일_작성한_회고_리스트_조회(db: Session, client: TestClient):
     # given
-    """
-    @:param: account, 요일
-    :return:
-    """
-    # when
+    with freezegun.freeze_time('2022-02-05'):
+        routine_data = RoutineCreateRequest(
+            title='first', category=1,
+            goal='one', is_alarm=True,
+            start_time='10:00:00',
+            days=[Week.SAT]
+        )
+        create_routine(db=db, routine=routine_data, account=1)
 
-    # then
-    """
-    {
-        'message' : {
-            'status' : 'RETROSPECT_SELECT_OK',
-            'msg': '회고 조회에 성공하셨습니다.'
-        },
-        'data': {
-            [
-                {
-                    'retrospect_id' : int or null,
-                    'routine_id': int
-                    'title' : str,
-                    'content': str,
-                    'sequence': int
-                },
-                {
-                    'retrospect_id' : int or null,
-                    'routine_id': int
-                    'title' : str,
-                    'content': str,
-                    'sequence': int
-                },
-            ]
-        }
-    }
-    """
+        routine_data = RoutineCreateRequest(
+            title='second', category=1,
+            goal='two', is_alarm=True,
+            start_time='10:00:00',
+            days=[Week.SAT]
+        )
+        create_routine(db=db, routine=routine_data, account=1)
+
+        routines = db.query(Routine).all()
+        for routine in routines:
+            data = {
+                'routine_id': routine.id,
+                'content': '그렇게 되었습니다.',
+                'date': '2022-02-05'
+            }
+            client.post(
+                f'{retrospect_router_url}',
+                data=data,
+                headers={'account': '1'}
+            )
+
+        response = client.get(
+            f'{retrospect_router_url}?date=2022-02-05',
+            headers={'account': '1'}
+        )
+        assert_that(response.status_code).is_equal_to(200)
+        result = response.json()
+        data = result['data']
+        assert_that(len(data)).is_equal_to(2)
+        first_data = data[0]
+        assert_that(first_data).contains_key('id', 'title', 'content', 'url')
