@@ -26,9 +26,9 @@ def get_routine_list(db: Session, account_id: int, today: str):
         RoutineDay
     ).filter(
         and_(
-            Routine.account_id.is_(account_id),
+            Routine.account_id == account_id,
             Routine.is_delete.is_(False),
-            RoutineDay.day.is_(weekday)
+            RoutineDay.day == weekday
         )
     ).options(
         load_only(*fields),
@@ -61,8 +61,8 @@ def update_or_create_routine_result(db: Session, routine_id: int, date: str, req
         RoutineResult
     ).filter(
         and_(
-            RoutineResult.routine_id.is_(routine_id),
-            RoutineResult.yymmdd.is_(yymmdd)
+            RoutineResult.routine_id == routine_id,
+            RoutineResult.yymmdd == yymmdd
         )
     ).first()
     if routine_result:
@@ -80,8 +80,8 @@ def get_routine_detail(db: Session, routine_id: int, account: int):
         Routine
     ).filter(
         and_(
-            Routine.id.is_(routine_id),
-            Routine.account_id.is_(account)
+            Routine.id == routine_id,
+            Routine.account_id == account
         )
     ).options(
         subqueryload('days').load_only('day'),
@@ -94,8 +94,8 @@ def patch_routine_detail(db: Session, request: RoutineCreateRequest, routine_id:
         Routine
     ).filter(
         and_(
-            Routine.id.is_(routine_id),
-            Routine.account_id.is_(account)
+            Routine.id == routine_id,
+            Routine.account_id == account
         )
     ).first()
 
@@ -119,8 +119,8 @@ def cancel_routine_results(db: Session, routine_id: int, date: str, account: int
         contains_eager(RoutineResult.routine)
     ).filter(
         and_(
-            RoutineResult.routine_id.is_(routine_id),
-            RoutineResult.yymmdd.is_(date)
+            RoutineResult.routine_id == routine_id,
+            RoutineResult.yymmdd == date
         )
     ).first()
     if routine_result is None:
@@ -137,8 +137,8 @@ def delete_routine(db: Session, routine_id: int, account: int):
         Routine
     ).filter(
         and_(
-            Routine.id.is_(routine_id),
-            Routine.account_id.is_(account)
+            Routine.id == routine_id,
+            Routine.account_id == account
         )
     ).delete()
     db.commit()
@@ -149,8 +149,8 @@ def change_routine_sequence(db: Session, weekday: int, account_id: int, routine_
     day = Week.get_weekday(weekday)
     routine_days = db.query(RoutineDay).join(Routine).filter(
         and_(
-            RoutineDay.day.is_(day),
-            Routine.account_id.is_(account_id)
+            RoutineDay.day == day,
+            Routine.account_id == account_id
         )
     ).all()
 

@@ -1,6 +1,6 @@
 from fastapi import UploadFile
 from sqlalchemy import and_
-from sqlalchemy.orm import Session, joinedload, contains_eager
+from sqlalchemy.orm import Session, joinedload, contains_eager, load_only
 
 from base.exception.exception import MinningException
 from base.utils.time import convert_str2datetime
@@ -23,9 +23,9 @@ def create_retrospect(db: Session, routine_id: int, content: str, date: str, ima
         contains_eager(RoutineDay.routine)
     ).filter(
         and_(
-            RoutineDay.routine_id.is_(routine_id),
-            RoutineDay.day.is_(weekday),
-            Routine.account_id.is_(account)
+            RoutineDay.routine_id == routine_id,
+            RoutineDay.day == weekday,
+            Routine.account_id == account
         )
     ).first()
 
@@ -47,8 +47,8 @@ def __check_retrospect(date, db, routine_days, routine_id):
         Retrospect
     ).filter(
         and_(
-            Retrospect.scheduled_date.is_(date),
-            Retrospect.routine_id.is_(routine_id)
+            Retrospect.scheduled_date == date,
+            Retrospect.routine_id == routine_id
         )
     ).exists()
     is_exists_retrospects = db.query(scheduled_retrospect).scalar()
@@ -62,8 +62,8 @@ def get_detail_retrospect(db: Session, retrospect_id: int, account: int):
     ).options(
         joinedload(Retrospect.image)
     ).filter(
-        Retrospect.id.is_(retrospect_id),
-        Retrospect.account_id.is_(account)
+        Retrospect.id == retrospect_id,
+        Retrospect.account_id == account
     ).first()
 
     if not retrospect:
@@ -77,8 +77,8 @@ def put_detail_retrospect(retrospect_id: int, content: str, image: UploadFile, d
     ).options(
         joinedload(Retrospect.image)
     ).filter(
-        Retrospect.id.is_(retrospect_id),
-        Retrospect.account_id.is_(account)
+        Retrospect.id == retrospect_id,
+        Retrospect.account_id == account
     ).first()
     if not retrospect:
         raise MinningException(RETROSPECT_NOT_FOUND_ID)
@@ -97,8 +97,8 @@ def delete_detail_retrospect(retrospect_id: int, db: Session, account: int):
         Retrospect
     ).filter(
         and_(
-            Retrospect.id.is_(retrospect_id),
-            Retrospect.account_id.is_(account)
+            Retrospect.id == retrospect_id,
+            Retrospect.account_id == account
         )
     ).first()
     if not retrospect:
@@ -106,3 +106,23 @@ def delete_detail_retrospect(retrospect_id: int, db: Session, account: int):
     db.delete(retrospect)
     db.commit()
     return True
+
+
+def get_list_retrospect(date: str, db: Session, account_id: int):
+    date = convert_str2datetime(date)
+    fields = ['id', 'routine_id', 'title', 'content']
+    result = db.query(
+        Retrospect
+    ).options(
+        joinedload(Retrospect.image)
+    ).filter(
+        and_(
+            Retrospect.account_id == account_id,
+            Retrospect.scheduled_date == date
+        )
+    ).options(
+      load_only(*fields)
+    ).order_by(
+        Retrospect.created_at.desc()
+    ).all()
+    return result
