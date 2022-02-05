@@ -63,7 +63,6 @@ class Routine(BaseColumnMixin, TimestampMixin, Base):
         added = request_days - retained
         self.add_days(added)
         self.delete_days(db, deleted)
-        self.update_modified_at()
 
     def delete_days(self, db, deleted):
         for delete_day in deleted:
@@ -84,4 +83,3 @@ class Routine(BaseColumnMixin, TimestampMixin, Base):
         self.start_time = convert_str2time(request.start_time)
         self.goal = request.goal
         self.is_alarm = request.is_alarm
-        self.update_modified_at()

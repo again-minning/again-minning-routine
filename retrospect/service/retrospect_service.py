@@ -87,7 +87,6 @@ def put_detail_retrospect(retrospect_id: int, content: str, image: UploadFile, d
         retrospect.image.url = image.filename
     elif image:
         retrospect.add_image(url=image.filename)
-    retrospect.update_modified_at()
     db.commit()
     return True
 
