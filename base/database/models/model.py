@@ -7,11 +7,8 @@ class TimestampMixin(object):
     def __init__(self):
         self.created_at = get_now()
         self.modified_at = get_now()
-    modified_at = Column(DateTime)
+    modified_at = Column(DateTime, onupdate=get_now())
     created_at = Column(DateTime)
-
-    def update_modified_at(self):
-        self.modified_at = get_now()
 
 
 class BaseColumnMixin(object):
