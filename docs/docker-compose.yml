@@ -11,5 +11,18 @@ services:
       - .env
     volumes:
       - minning_volume:/var/lib/postgresql/data
+  mongo.db:
+    container_name: minning-mongo
+    image: mongo:5.0.3
+    restart: unless-stopped
+    ports:
+      - "27016:27017"
+    volumes:
+      - mongodb-data:/data/db
+    command: --auth
+    env_file:
+      - .env
+
 volumes:
   minning_volume:
+  mongodb-data:

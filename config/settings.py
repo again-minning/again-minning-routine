@@ -8,6 +8,7 @@ class DefaultSettings(BaseSettings):
     APP_ENV: str = 'local'
     DATABASE_URL: str
     SHOW_SQL: bool = False
+    MONGO_URL: str
 
     class Config:
         env_file = '.env'

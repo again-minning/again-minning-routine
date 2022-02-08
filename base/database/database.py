@@ -1,9 +1,11 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from pymongo import MongoClient
 
 from config.settings import settings
 
+# SQLALCHEMY
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 SHOW_SQL = settings.SHOW_SQL
 kwargs = {}
@@ -30,3 +32,9 @@ def get_db():
         raise
     finally:
         session.close()
+
+
+# MONGODB
+
+conn = MongoClient(settings.MONGO_URL)
+mongo_db = conn.minning_db
