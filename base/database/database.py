@@ -34,6 +34,19 @@ def get_db():
         session.close()
 
 
+def commit(func):
+    def inner(db: Session, *args, **kwargs):
+        try:
+            ret = func(db, *args, **kwargs)
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+        return ret
+
+    return inner
+
+
 # MONGODB
 
 conn = MongoClient(settings.MONGO_URL)
