@@ -112,6 +112,7 @@ def test_루틴_생성이_해당_수행하는_요일과_맞지_않을때(db: Ses
     assert_that(len(routine_results)).is_zero()
 
 
+@maintain_idempotent
 def test_루틴_생성_루틴_이름_공백일_때(db: Session, client: TestClient):
     # given
     data = {
@@ -322,6 +323,7 @@ def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_�
     assert_that(body['result']).is_equal_to('DONE')
 
 
+@maintain_idempotent
 def test_루틴_값_수정하는데_요일일_때(db: Session, client: TestClient):
     # given
     data = {

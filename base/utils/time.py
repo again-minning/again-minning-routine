@@ -8,6 +8,7 @@ from pytz import timezone, utc
 
 from base.exception.exception import MinningException
 from routine.constants.routine_message import ROUTINE_FIELD_DATE_ERROR_MESSAGE, ROUTINE_UPDATE_PERIOD_OVER_RESPONSE
+from routine.constants.week import Week, week_get_index
 
 KST = timezone('Asia/Seoul')
 
@@ -15,6 +16,18 @@ KST = timezone('Asia/Seoul')
 def get_now() -> datetime.datetime:
     now = datetime.datetime.utcnow()
     return utc.localize(now).astimezone(KST)
+
+
+def get_last_week_about(date: datetime.datetime, week: Week):
+    return date - timedelta(days=date.weekday()) - timedelta(days=7) + timedelta(days=week_get_index(week))
+
+
+def get_end_datetime(date: datetime.datetime):
+    return date.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1) - timedelta(microseconds=1)
+
+
+def get_start_datetime(date: datetime.datetime):
+    return date.replace(hour=0, minute=0, second=0, microsecond=0)
 
 
 def get_today_end():
