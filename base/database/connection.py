@@ -7,6 +7,7 @@ from routine.models.routine import Routine, RoutineDay, RoutineResult
 from retrospect.models.retrospect import Retrospect
 from retrospect.models.snapshot import Snapshot
 from config.settings import settings
+import logging
 models = [Routine, RoutineDay, RoutineResult, Retrospect, Snapshot]
 
 
@@ -27,14 +28,14 @@ class Connection:
 
     def __execute(self):
         if self.ddl_mode == ConnectionMode.NONE:
-            print('===============NONE==================')
+            logging.info('===============NONE==================')
             return
         if self.ddl_mode == ConnectionMode.UPDATE:
-            print('===============UPDATE==================')
+            logging.info('===============UPDATE==================')
             CONNECTION()
             return
         if self.ddl_mode == ConnectionMode.CREATE:
-            print('===============CREATE==================')
+            logging.info('===============CREATE==================')
             Base.metadata.drop_all(bind=engine)
             CONNECTION()
             return
