@@ -1,7 +1,7 @@
+from motor.motor_asyncio import AsyncIOMotorClient
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from pymongo import MongoClient
+from sqlalchemy.orm import sessionmaker, Session
 
 from config.settings import settings
 
@@ -48,6 +48,12 @@ def commit(func):
 
 
 # MONGODB
+class MongoDB:
+    client: AsyncIOMotorClient = None
 
-conn = MongoClient(settings.MONGO_URL)
-mongo_db = conn.minning_db
+
+conn = MongoDB()
+
+
+async def get_mongo_db() -> AsyncIOMotorClient:
+    yield conn.client
