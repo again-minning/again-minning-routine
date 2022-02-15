@@ -1,9 +1,11 @@
+from motor.motor_asyncio import AsyncIOMotorClient
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 
 from config.settings import settings
 
+# SQLALCHEMY
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 SHOW_SQL = settings.SHOW_SQL
 kwargs = {}
@@ -30,3 +32,28 @@ def get_db():
         raise
     finally:
         session.close()
+
+
+def commit(func):
+    def inner(db: Session, *args, **kwargs):
+        try:
+            ret = func(db, *args, **kwargs)
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+        return ret
+
+    return inner
+
+
+# MONGODB
+class MongoDB:
+    client: AsyncIOMotorClient = None
+
+
+conn = MongoDB()
+
+
+async def get_mongo_db() -> AsyncIOMotorClient:
+    yield conn.client

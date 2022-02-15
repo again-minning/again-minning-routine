@@ -15,6 +15,17 @@ class RoutineCoreBase(BaseModel):
     category: Category
 
 
+class RoutineBatchSchema(RoutineCoreBase):
+    id: int
+    account_id: int
+
+    @classmethod
+    def to_list_response(cls, routines):
+        return [
+            RoutineBatchSchema(id=routine.id, title=routine.title,
+                               category=routine.category, account_id=routine.account_id) for routine in routines]
+
+
 class RoutineBase(RoutineCoreBase):
     goal: str
     start_time: str
@@ -127,3 +138,22 @@ class RoutineSequenceRequest(BaseModel):
         for routine_sequence in self.routine_sequences:
             res[routine_sequence.routine_id] = routine_sequence.sequence
         return res
+
+
+class RoutineCountResponse(BaseModel):
+    count: int
+
+    @classmethod
+    def to_response(cls, routine_counts):
+        return RoutineCountResponse(count=routine_counts)
+
+
+class RoutineResultSchema(BaseModel):
+    routine_id: int
+    date: str
+    result: Result
+
+    @classmethod
+    def to_list_response(cls, routine_results):
+        return [RoutineResultSchema(routine_id=routine_result.id, date=str(routine_result.yymmdd), result=routine_result.result)
+                for routine_result in routine_results]

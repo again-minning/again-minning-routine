@@ -11,7 +11,9 @@ on:
 
 jobs:
   build:
-
+    strategy:
+      matrix:
+        mongodb-version: ['5.0.3']
     runs-on: ubuntu-latest
 
     steps:
@@ -37,6 +39,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8 pytest
         pip install -r requirements.txt
+    - name: MongoDB in GitHub Actions
+      uses: supercharge/mongodb-github-action@1.7.0
+      with:
+        mongodb-version: ${{ matrix.mongodb-version }}
+        mongodb-port: 27016
+        mongodb-db: test_minning_db
+        mongodb-username: minning_user
+        mongodb-password: minning_password
     - name: Lint with flake8
       run: |
         flake8 .

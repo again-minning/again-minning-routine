@@ -29,3 +29,22 @@ class Week(str, Enum):
             return Week.SUN
         else:
             return None
+
+
+def week_get_index(week: Week):
+    if week == Week.MON:
+        return 0
+    elif week == Week.TUE:
+        return 1
+    elif week == Week.WED:
+        return 2
+    elif week == Week.THU:
+        return 3
+    elif week == Week.FRI:
+        return 4
+    elif week == Week.SAT:
+        return 5
+    elif week == Week.SUN:
+        return 6
+    else:
+        return None
