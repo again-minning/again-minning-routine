@@ -157,4 +157,5 @@ async def __make_report_data(date="2022-02-07 00:00:00", categories=('SELF', 'MI
             }
         ]
     }
+
     return data

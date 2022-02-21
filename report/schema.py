@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict, Set
+from typing import Optional, List, Dict
 
 from bson import ObjectId
 from pydantic import BaseModel, Field
@@ -106,7 +106,7 @@ class Report(BaseModel):
 
     @classmethod
     def calculate_achievement_rate(cls, _done, _try, _none):
-        return (_done + 0.5*_try) / (_none + _try + _done)
+        return (_done + 0.5 * _try) / (_none + _try + _done)
 
     class Config:
         allow_population_by_field_name = True

@@ -1,4 +1,3 @@
-import asyncio
 from typing import Generator
 
 import pytest
@@ -85,4 +84,3 @@ def maintain_idempotent_async():
             return ret
         return inner
     return wrapper
-
