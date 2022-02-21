@@ -12,6 +12,7 @@ from base.database.connection import models
 from base.database.database import SessionLocal, get_db, conn
 from config.settings import settings
 from main import app
+from report.collections import Collections
 
 
 @pytest.fixture(scope='function')
@@ -59,13 +60,6 @@ async def mongo_db() -> Generator:
         db.client.close()
 
 
-@pytest.fixture(scope='module')
-def event_loop():
-    loop = asyncio.get_event_loop() or asyncio.new_event_loop()
-    yield loop
-    loop.close()
-
-
 def maintain_idempotent(func):
     def inner(db: Session, client: TestClient):
         try:
@@ -76,3 +70,19 @@ def maintain_idempotent(func):
             db.commit()
         return ret
     return inner
+
+
+def maintain_idempotent_async():
+    def wrapper(func):
+        @pytest.mark.parametrize('anyio_backend', ['asyncio'])
+        async def inner(anyio_backend, async_client: AsyncClient, mongo_db: AsyncIOMotorClient):
+            try:
+                ret = await func(anyio_backend, async_client, mongo_db)
+            finally:
+                collections = [Collections.REPORT.value, Collections.MONTHLY_REPORT.value]
+                for collection in collections:
+                    await mongo_db[settings.DB_NAME][collection].delete_many({})
+            return ret
+        return inner
+    return wrapper
+
