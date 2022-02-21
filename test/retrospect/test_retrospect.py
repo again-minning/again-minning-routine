@@ -27,7 +27,7 @@ def test_회고_정상적으로_생성(db: Session, client: TestClient):
     # given
     with freezegun.freeze_time('2022-01-31'):
         routine_data = RoutineCreateRequest(
-            title='time_test', category=1,
+            title='time_test', category='SELF',
             goal='daily', is_alarm=True,
             start_time='10:00:00',
             days=[Week.MON]
@@ -60,7 +60,7 @@ def test_회고_중복_체크(db: Session, client: TestClient):
     # given
     with freezegun.freeze_time('2022-01-31'):
         routine_data = RoutineCreateRequest(
-            title='time_test', category=1,
+            title='time_test', category='SELF',
             goal='daily', is_alarm=True,
             start_time='10:00:00',
             days=[Week.MON]
@@ -102,7 +102,7 @@ def test_회고_생성_성공_이미지_파라미터가_없을_때(db: Session, 
     # given
     with freezegun.freeze_time('2022-01-31'):
         routine_data = RoutineCreateRequest(
-            title='time_test', category=1,
+            title='time_test', category='SELF',
             goal='daily', is_alarm=True,
             start_time='10:00:00',
             days=[Week.MON]
@@ -132,7 +132,7 @@ def test_회고_생성_실패_루틴_정보가_없을_때(db: Session, client: T
     # given
     with freezegun.freeze_time('2022-01-31'):
         routine_data = RoutineCreateRequest(
-            title='time_test', category=1,
+            title='time_test', category='SELF',
             goal='daily', is_alarm=True,
             start_time='10:00:00',
             days=[Week.MON]
@@ -157,7 +157,7 @@ def test_회고_수정할_때_이미지에_대해서(db: Session, client: TestCl
     # given
     with freezegun.freeze_time('2022-02-01'):
         routine_data = RoutineCreateRequest(
-            title='first', category=1,
+            title='first', category='SELF',
             goal='one', is_alarm=True,
             start_time='10:00:00',
             days=[Week.TUE]
@@ -202,7 +202,7 @@ def test_회고_수정할_때_글_내용_수정할_때(db: Session, client: Test
     # given
     with freezegun.freeze_time('2022-02-01'):
         routine_data = RoutineCreateRequest(
-            title='first', category=1,
+            title='first', category='SELF',
             goal='one', is_alarm=True,
             start_time='10:00:00',
             days=[Week.TUE]
@@ -233,7 +233,7 @@ def test_회고_삭제할_때(db: Session, client: TestClient):
     # given
     with freezegun.freeze_time('2022-02-03'):
         routine_data = RoutineCreateRequest(
-            title='first', category=1,
+            title='first', category='SELF',
             goal='one', is_alarm=True,
             start_time='10:00:00',
             days=[Week.THU]
@@ -268,7 +268,7 @@ def test_디테일_회고_조회(db: Session, client: TestClient):
     # given
     with freezegun.freeze_time('2022-02-03'):
         routine_data = RoutineCreateRequest(
-            title='first', category=1,
+            title='first', category='SELF',
             goal='one', is_alarm=True,
             start_time='10:00:00',
             days=[Week.THU]
@@ -302,7 +302,7 @@ def test_가져오는데_유저아이디가_틀릴_때(db: Session, client: Test
     # given
     with freezegun.freeze_time('2022-02-04'):
         routine_data = RoutineCreateRequest(
-            title='first', category=1,
+            title='first', category='SELF',
             goal='one', is_alarm=True,
             start_time='10:00:00',
             days=[Week.FRI]
@@ -334,7 +334,7 @@ def test_회고_수정하는데_유저아이디가_틀릴_때(db: Session, clien
     # given
     with freezegun.freeze_time('2022-02-04'):
         routine_data = RoutineCreateRequest(
-            title='first', category=1,
+            title='first', category='SELF',
             goal='one', is_alarm=True,
             start_time='10:00:00',
             days=[Week.FRI]
@@ -374,7 +374,7 @@ def test_회고_삭제할_때_유저아이디_불일치(db: Session, client: Tes
     # given
     with freezegun.freeze_time('2022-02-04'):
         routine_data = RoutineCreateRequest(
-            title='first', category=1,
+            title='first', category='SELF',
             goal='one', is_alarm=True,
             start_time='10:00:00',
             days=[Week.FRI]
@@ -401,7 +401,7 @@ def test_당일_작성한_회고_리스트_조회(db: Session, client: TestClien
     # given
     with freezegun.freeze_time('2022-02-05'):
         routine_data = RoutineCreateRequest(
-            title='first', category=1,
+            title='first', category='SELF',
             goal='one', is_alarm=True,
             start_time='10:00:00',
             days=[Week.SAT]
@@ -409,7 +409,7 @@ def test_당일_작성한_회고_리스트_조회(db: Session, client: TestClien
         create_routine(db=db, routine=routine_data, account=1)
 
         routine_data = RoutineCreateRequest(
-            title='second', category=1,
+            title='second', category='SELF',
             goal='two', is_alarm=True,
             start_time='10:00:00',
             days=[Week.SAT]

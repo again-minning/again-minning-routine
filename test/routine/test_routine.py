@@ -30,7 +30,7 @@ def test_루틴_생성_성공했을_때(db: Session, client: TestClient):
     # given
     data = {
         'title': 'wake_up',
-        'category': 1,
+        'category': 'SELF',
         'goal': 'daily',
         'is_alarm': True,
         'start_time': '10:00:00',
@@ -57,7 +57,7 @@ def test_루틴_생성이_해당_수행하는_요일과_맞을_때(db: Session, 
     # given
     data = {
         'title': 'time_test',
-        'category': 1,
+        'category': 'SELF',
         'goal': 'daily',
         'is_alarm': True,
         'start_time': '10:00:00',
@@ -93,7 +93,7 @@ def test_루틴_생성이_해당_수행하는_요일과_맞지_않을때(db: Ses
     # given
     data = {
         'title': 'time_test',
-        'category': 1,
+        'category': 'SELF',
         'goal': 'daily',
         'is_alarm': True,
         'start_time': '10:00:00',
@@ -117,7 +117,7 @@ def test_루틴_생성_루틴_이름_공백일_때(db: Session, client: TestClie
     # given
     data = {
         'title': '',
-        'category': 1,
+        'category': 'SELF',
         'goal': 'daily',
         'is_alarm': True,
         'start_time': '10:00:00',
@@ -182,7 +182,7 @@ def test_루틴_생성_요일_값_전달받지_못할_때(db: Session, client: T
     # given
     data = {
         'title': 'wake_up',
-        'category': 1,
+        'category': 'SELF',
         'goal': 'daily',
         'is_alarm': True,
         'start_time': '10:00:00'
@@ -214,7 +214,7 @@ def test_루틴_생성_알람보내기값이_null일_때(db: Session, client: Te
     # given
     data = {
         'title': 'is_alarm',
-        'category': 1,
+        'category': 'SELF',
         'goal': 'daily',
         'start_time': '10:00:00',
         'days': ['MON', 'WED', 'FRI']
@@ -239,7 +239,7 @@ def test_루틴_전체조회(db: Session, client: TestClient):
     # given
     data = {
         'title': 'yes',
-        'category': 1,
+        'category': 'SELF',
         'goal': 'daily',
         'start_time': '10:00:00',
         'days': ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
@@ -274,7 +274,7 @@ def test_루틴_조회_이때_루틴결과값이_여러개이지만_하나만_�
     days.remove(Week.get_weekday(now_weekday))
     data = {
         'title': 'yes',
-        'category': 1,
+        'category': 'SELF',
         'goal': 'daily',
         'start_time': '10:00:00',
         'days': days
@@ -328,7 +328,7 @@ def test_루틴_값_수정하는데_요일일_때(db: Session, client: TestClien
     # given
     data = {
         'title': 'yes',
-        'category': 1,
+        'category': 'SELF',
         'goal': 'daily',
         'start_time': '10:00:00',
         'days': ['FRI', 'SAT', 'SUN']
@@ -341,7 +341,7 @@ def test_루틴_값_수정하는데_요일일_때(db: Session, client: TestClien
     routine = db.query(Routine).filter(and_(Routine.title == data['title'], Routine.account_id == 1)).first()
     patch_data = {
         'title': 'bye',
-        'category': 1,
+        'category': 'SELF',
         'goal': 'say-good-bye',
         'start_time': '11:00:00',
         'days': ['MON', 'WED', 'THU']
@@ -366,7 +366,7 @@ def test_루틴_값_수정하는데_요일이_아닌_다른_것(db: Session, cli
     # given
     data = {
         'title': 'yes',
-        'category': 1,
+        'category': 'SELF',
         'goal': 'daily',
         'start_time': '10:00:00',
         'days': ['FRI', 'SAT', 'SUN']
@@ -379,7 +379,7 @@ def test_루틴_값_수정하는데_요일이_아닌_다른_것(db: Session, cli
     routine: Routine = db.query(Routine).filter(and_(Routine.title == data['title'], Routine.account_id == 1)).first()
     patch_data = RoutineCreateRequest(
         title='bye',
-        category=1, goal='say-good-bye',
+        category='SELF', goal='say-good-bye',
         start_time='11:00:00', days=['FRI', 'SAT', 'SUN']
     )
     # when
@@ -402,7 +402,7 @@ def test_루틴_수행여부_값_저장_오늘이_수행하는_날일_때(db: Se
     # given
     create = {
         'title': 'wake_up',
-        'category': 1,
+        'category': 'SELF',
         'goal': 'daily',
         'is_alarm': True,
         'start_time': '10:00:00',
@@ -445,7 +445,7 @@ def test_루틴_결과_체크하는데_Default인_경우(db: Session, client: Te
     days = ['MON', 'TUE', 'WED', 'FRI', 'SAT', 'SUN']
     create = {
         'title': 'wake_up',
-        'category': 1,
+        'category': 'SELF',
         'goal': 'daily',
         'is_alarm': True,
         'start_time': '10:00:00',
@@ -484,7 +484,7 @@ def test_루틴_디테일_조회(db: Session, client: TestClient):
     # given
     data = {
         'title': 'time_test',
-        'category': 1,
+        'category': 'SELF',
         'goal': 'daily',
         'is_alarm': True,
         'start_time': '10:00:00',
@@ -519,7 +519,7 @@ def test_루틴_디테일_조회(db: Session, client: TestClient):
 def test_루틴_수행여부_취소(db: Session, client: TestClient):
     # given
     routine_data = RoutineCreateRequest(
-        title='time_test', category=1,
+        title='time_test', category='SELF',
         goal='daily', is_alarm=True,
         start_time='10:00:00',
         days=[Week.MON, Week.TUE, Week.WED, Week.THU, Week.FRI, Week.SAT, Week.SUN]
@@ -552,7 +552,7 @@ def test_루틴_수행여부_취소(db: Session, client: TestClient):
 def test_루틴_수행여부_취소하는데_유저아이디_불일치(db: Session, client: TestClient):
     # given
     routine_data = RoutineCreateRequest(
-        title='time_test', category=1,
+        title='time_test', category='SELF',
         goal='daily', is_alarm=True,
         start_time='10:00:00',
         days=[Week.MON, Week.TUE, Week.WED, Week.THU, Week.FRI, Week.SAT, Week.SUN]
@@ -592,7 +592,7 @@ def test_존재하지_않는_아이디_조회했을_때(db: Session, client: Tes
 def test_2일이상_된_루틴결과_수정했을_때(db: Session, client: TestClient):
     with freezegun.freeze_time('2022-01-28'):
         routine_data = RoutineCreateRequest(
-            title='time_test', category=1,
+            title='time_test', category='SELF',
             goal='daily', is_alarm=True,
             start_time='10:00:00',
             days=[Week.MON, Week.TUE, Week.WED, Week.THU, Week.FRI, Week.SAT, Week.SUN]
@@ -619,7 +619,7 @@ def test_2일이상_된_루틴결과_수정했을_때(db: Session, client: TestC
 def test_3일이상_된_루틴결과_수정했을_때(db: Session, client: TestClient):
     with freezegun.freeze_time('2022-01-28'):
         routine_data = RoutineCreateRequest(
-            title='time_test', category=1,
+            title='time_test', category='SELF',
             goal='daily', is_alarm=True,
             start_time='10:00:00',
             days=[Week.MON, Week.TUE, Week.WED, Week.THU, Week.FRI, Week.SAT, Week.SUN]
@@ -657,7 +657,7 @@ def test_루틴_삭제(db: Session, client: TestClient):
     # given
     with freezegun.freeze_time('2022-01-30'):   # 일요일
         routine_data = RoutineCreateRequest(
-            title='time_test', category=1,
+            title='time_test', category='SELF',
             goal='daily', is_alarm=True,
             start_time='10:00:00',
             days=[Week.SUN]
@@ -681,14 +681,14 @@ def test_루틴_순서_변경(db: Session, client: TestClient):
     # given
     with freezegun.freeze_time('2022-01-30'):   # 일요일
         routine_data = RoutineCreateRequest(
-            title='첫째', category=1,
+            title='첫째', category='SELF',
             goal='daily', is_alarm=True,
             start_time='10:00:00',
             days=[Week.SUN]
         )
         create_routine(db=db, routine=routine_data, account=1)
         routine_data = RoutineCreateRequest(
-            title='둘째', category=2,
+            title='둘째', category='HEALTH',
             goal='second', is_alarm=True,
             start_time='09:00:00',
             days=[Week.SUN]
@@ -722,7 +722,7 @@ def test_루틴_순서_변경(db: Session, client: TestClient):
 @maintain_idempotent
 def test_루틴디테일_유저아이디가_일치하지_않을_때(db: Session, client: TestClient):
     routine_data = RoutineCreateRequest(
-        title='첫째', category=1,
+        title='첫째', category='SELF',
         goal='daily', is_alarm=True,
         start_time='10:00:00',
         days=[Week.SUN]

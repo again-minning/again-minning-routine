@@ -106,7 +106,7 @@ def test_루틴결과_루틴아이디를_통해_조회_and_e2e(db: Session, clie
         for i in range(10):
             data = {
                 'title': f'글{i}',
-                'category': 1,
+                'category': 'SELF',
                 'goal': f'목표{i}',
                 'is_alarm': True,
                 'start_time': '10:00:00',

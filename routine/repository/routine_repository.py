@@ -106,3 +106,19 @@ def get_routine_days(db, account_id, day):
             Routine.account_id == account_id
         )
     ).all()
+
+
+def get_routine_day_with_routine_by(db, routine_id, account, weekday):
+    return db.query(
+        RoutineDay
+    ).join(
+        RoutineDay.routine
+    ).options(
+        contains_eager(RoutineDay.routine)
+    ).filter(
+        and_(
+            RoutineDay.routine_id == routine_id,
+            RoutineDay.day == weekday,
+            Routine.account_id == account
+        )
+    ).first()
