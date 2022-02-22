@@ -35,9 +35,9 @@ def get_db():
 
 
 def commit(func):
-    def inner(db: Session, *args, **kwargs):
+    def inner(db: Session, **kwargs):
         try:
-            ret = func(db, *args, **kwargs)
+            ret = func(db, **kwargs)
             db.commit()
         except Exception:
             db.rollback()
