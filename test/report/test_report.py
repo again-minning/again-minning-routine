@@ -1,37 +1,74 @@
 import json
 import random
-from datetime import timedelta
-from test.conftest import maintain_idempotent_async
+
+import freezegun
 from assertpy import assert_that
 from httpx import AsyncClient
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from base.utils.time import convert_str2datetime
+from base.utils.constants import HttpStatus
+from base.utils.time import get_now, get_start_datetime
+from report.constants.report_message import REPORT_NOT_FOUND
 from routine.constants.category import Category
+from test.conftest import maintain_idempotent_async
+from test.report.utils import __make_report_data
 
-routines_router_url = '/api/v1/routines'
+report_router_url = '/api/v1/reports'
 routines_batch_router_url = '/api/v1/batch-routines'
 report_batch_router_url = '/api/v1/batch-reports'
 
 
 @maintain_idempotent_async()
-async def test_주_리포트_생성(anyio_backend, async_client: AsyncClient, mongo_db: AsyncIOMotorClient):
+@freezegun.freeze_time('2022-02-14')
+async def test_주_리포트_조회(anyio_backend, async_client: AsyncClient, mongo_db: AsyncIOMotorClient):
     # given
     data = await __make_report_data()
-    response = await async_client.post(
+    await async_client.post(
         f'{report_batch_router_url}/week',
         content=json.dumps(data)
     )
-    data = response.json()
+    today = get_start_datetime(get_now()).strftime('%Y-%m-%dT%H:%M:%S')
+    # when
+    response = await async_client.get(
+        f'{report_router_url}/week?date={today}',
+        headers={'account': '1'}
+    )
+    # then
+    result = response.json()
+    message = result['message']
+    data = result['data']
+    assert_that(response.status_code).is_equal_to(200)
+    assert_that(message['status']).is_equal_to(HttpStatus.REPORT_DETAIL_OK.value)
     assert_that(data['done_count']).is_equal_to(5)
     assert_that(data['not_count']).is_equal_to(3)
-    assert_that(data['try_count']).is_equal_to(0)
-    assert_that(data['achievement_rate']).is_equal_to(0.625)
     assert_that(len(data['routine_results'])).is_equal_to(8)
 
 
 @maintain_idempotent_async()
-async def test_월_리포트_생성(anyio_backend, async_client: AsyncClient, mongo_db: AsyncIOMotorClient):
+async def test_주_리포트_없을_때_조회(anyio_backend, async_client: AsyncClient, mongo_db: AsyncIOMotorClient):
+    # given
+    with freezegun.freeze_time('2022-02-14'):
+        data = await __make_report_data()
+        response = await async_client.post(
+            f'{report_batch_router_url}/week',
+            content=json.dumps(data)
+        )
+    with freezegun.freeze_time('2022-02-21'):
+        today = get_start_datetime(get_now()).strftime('%Y-%m-%dT%H:%M:%S')
+        # when
+        response = await async_client.get(
+            f'{report_router_url}/week?date={today}',
+            headers={'account': '1'}
+        )
+    # then
+    result = response.json()
+    assert_that(response.status_code).is_equal_to(400)
+    assert_that(result['body']).is_equal_to(REPORT_NOT_FOUND)
+
+
+@maintain_idempotent_async()
+async def test_월_리포트_조회(anyio_backend, async_client: AsyncClient, mongo_db: AsyncIOMotorClient):
+    # given
     categories = [Category.DAILY.value, Category.SELF.value, Category.HEALTH.value, Category.MIRACLE.value]
     categories = random.sample(categories, 3)
     data = await __make_report_data(date='2022-01-10', categories=categories)
@@ -58,104 +95,37 @@ async def test_월_리포트_생성(anyio_backend, async_client: AsyncClient, mo
         content=json.dumps(data)
     )
 
-    response = await async_client.post(
-        f'{report_batch_router_url}/month?account-id=1'
-    )
-    data = response.json()
-    category_detail = data['category_detail']
-    total = 0
-    for k, v in category_detail.items():
-        total += len(v.keys())
-    assert_that(total).is_equal_to(8)
-    total = 0
-    category_routine_count = data['category_routine_count']
-    for k, v in category_routine_count.items():
-        total += v
-    assert_that(total).is_equal_to(8)
-    assert_that(data['weekly_achievement_rate'][0]).is_equal_to(0.625)
+    with freezegun.freeze_time('2022-02-01'):
+        # when
+        await async_client.post(
+            f'{report_batch_router_url}/month?account-id=1'
+        )
+        today = get_start_datetime(get_now()).strftime('%Y-%m-%dT%H:%M:%S')
+        # when
+        response = await async_client.get(
+            f'{report_router_url}/month?date={today}',
+            headers={'account': '1'}
+        )
+        assert_that(response.status_code).is_equal_to(200)
+        result = response.json()
+        message = result['message']
+        assert_that(message['status']).is_equal_to(HttpStatus.REPORT_DETAIL_OK.value)
+        data = result['data']
+        assert_that(data).contains_key('account_id', 'category_detail', 'category_routine_count', 'created_at', 'weekly_achievement_rate')
+        category_detail = data['category_detail']
+        assert_that(category_detail).contains_key('DAILY', 'ETC', 'HEALTH', 'MIRACLE', 'SELF')
+        weekly_achievement_rate = data['weekly_achievement_rate']
+        assert_that(len(weekly_achievement_rate)).is_equal_to(4)
 
 
-async def __make_report_data(date="2022-02-07 00:00:00", categories=('SELF', 'MIRACLE', 'DAILY')):
-    data = {
-        "routines": [
-            {
-                "title": "글5",
-                "category": categories[0],
-                "id": 6,
-                "account_id": 1
-            }, {
-                "title": "글6",
-                "category": categories[0],
-                "id": 7,
-                "account_id": 1
-            }, {
-                "title": "글7",
-                "category": categories[1],
-                "id": 8,
-                "account_id": 1
-            }, {
-                "title": "글8",
-                "category": categories[1],
-                "id": 9,
-                "account_id": 1
-            }, {
-                "title": "글9",
-                "category": categories[2],
-                "id": 10,
-                "account_id": 1
-            }, {
-                "title": "글10",
-                "category": categories[2],
-                "id": 11,
-                "account_id": 1
-            }, {
-                "title": "글11",
-                "category": categories[0],
-                "id": 12,
-                "account_id": 1
-            }, {
-                "title": "글12",
-                "category": categories[0],
-                "id": 13,
-                "account_id": 1
-            }
-
-        ],
-        "routine_results": [
-            {
-                "routine_id": 6,
-                "date": date,
-                "result": "DONE"
-            }, {
-                "routine_id": 7,
-                "date": date,
-                "result": "DONE"
-            }, {
-                "routine_id": 8,
-                "date": date,
-                "result": "NOT"
-            }, {
-                "routine_id": 9,
-                "date": date,
-                "result": "NOT"
-            }, {
-                "routine_id": 10,
-                "date": date,
-                "result": "NOT"
-            }, {
-                "routine_id": 11,
-                "date": str(convert_str2datetime(date) + timedelta(days=2)),
-                "result": "DONE"
-            }, {
-                "routine_id": 12,
-                "date": str(convert_str2datetime(date) + timedelta(days=2)),
-                "result": "DONE"
-            }, {
-                "routine_id": 13,
-                "date": str(convert_str2datetime(date) + timedelta(days=5)),
-                "result": "DONE"
-            }
-        ]
-    }
-
-    return data
+@maintain_idempotent_async()
+async def test_월_리포트_없을_때_조회(anyio_backend, async_client: AsyncClient, mongo_db: AsyncIOMotorClient):
+    with freezegun.freeze_time('2022-02-01'):
+        today = get_start_datetime(get_now()).strftime('%Y-%m-%dT%H:%M:%S')
+        # when
+        response = await async_client.get(
+            f'{report_router_url}/month?date={today}',
+            headers={'account': '1'}
+        )
+    assert_that(response.status_code).is_equal_to(400)
+    assert_that(response.json()['body']).is_equal_to(REPORT_NOT_FOUND)

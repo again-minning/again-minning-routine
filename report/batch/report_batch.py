@@ -1,7 +1,7 @@
 from fastapi.encoders import jsonable_encoder
 from motor.motor_asyncio import AsyncIOMotorClient
 from base.utils.collection import to_dict
-from base.utils.time import get_now
+from base.utils.time import get_now, get_start_datetime
 from config.settings import settings
 from report.collections import Collections
 from report.schema import CreateReportSchema, RoutineElement, RoutineResultElement, Report, MonthlyReport
@@ -26,7 +26,7 @@ async def create_monthly_report(mongo_db: AsyncIOMotorClient, account_id: int):
     report = MonthlyReport(
         account_id=account_id, weekly_achievement_rate=weekly_achievement_rate,
         category_routine_count=category_routine_count, category_detail=category_detail,
-        created_at=str(get_now())
+        created_at=get_start_datetime(get_now())
     )
     db_report = jsonable_encoder(report)
     new_report = await mongo_db[settings.DB_NAME][Collections.MONTHLY_REPORT.value].insert_one(db_report)
@@ -125,7 +125,7 @@ async def create_weekly_report(mongo_db: AsyncIOMotorClient, request: CreateRepo
             achievement_rate=Report.calculate_achievement_rate(_done=_done, _try=_try, _none=_none),
             done_count=_done, try_count=_try, not_count=_none,
             routine_results=res,
-            created_at=str(get_now())
+            created_at=get_start_datetime(get_now())
         )
         db_report = jsonable_encoder(report)
         new_report = await mongo_db[settings.DB_NAME][Collections.REPORT.value].insert_one(db_report)

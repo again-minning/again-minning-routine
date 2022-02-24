@@ -1,3 +1,4 @@
+import datetime
 from typing import Optional, List, Dict
 
 from bson import ObjectId
@@ -52,7 +53,7 @@ class MonthlyReport(BaseModel):
     weekly_achievement_rate: List[float]
     category_routine_count: Dict[str, int]
     category_detail: Dict[str, Dict[str, CategoryRoutineElement]]
-    created_at: str
+    created_at: datetime.datetime
 
     class Config:
         allow_population_by_field_name = True
@@ -63,7 +64,7 @@ class MonthlyReport(BaseModel):
         schema_extra = {
             'example': {
                 'account_id': 1,
-                'weekly_achievement_rate': [80, 42, 100, 90],
+                'weekly_achievement_rate': [0.625, 0.7, 0.8, 0.9],
                 'category_routine_count': {
                     'MIRACLE': 3,
                     'SELF': 2,
@@ -102,7 +103,7 @@ class Report(BaseModel):
     try_count: int
     not_count: int
     routine_results: Optional[List[RoutineElement]]
-    created_at: str
+    created_at: datetime.datetime
 
     @classmethod
     def calculate_achievement_rate(cls, _done, _try, _none):
@@ -117,7 +118,7 @@ class Report(BaseModel):
         schema_extra = {
             'example': {
                 'account_id': 1,
-                'achievement_rate': 70,
+                'achievement_rate': 0.625,
                 'done_count': 6,
                 'try_count': 2,
                 'not_count': 2,
